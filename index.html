@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Image Vault – Upload and manage your images</title>
+<title>Image Vault – A shared gallery for everyone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -15,14 +15,13 @@
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
+  :root{
     --bg:#10151f; --surface:#192130; --ink:#e8edf6; --muted:#98a4ba;
     --line:#2b3649; --accent:#6f8dff; --accent-ink:#0d1220; --danger:#ff6b93;
     color-scheme:dark;
   }
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
 body{
   margin:0; background:var(--bg); color:var(--ink);
   font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -30,23 +29,27 @@ body{
 }
 .wrap{max-width:1040px; margin:0 auto; padding:48px 20px 80px}
 header h1{font-size:clamp(2rem,5vw,3.25rem); font-weight:800; letter-spacing:-.03em; margin:0 0 6px; line-height:1.05}
-header p{margin:0; color:var(--muted); max-width:52ch}
+header p{margin:0; color:var(--muted); max-width:56ch}
 
-/* Drop zone */
+.setup{margin:24px 0; padding:16px 18px; border:1px solid var(--danger); border-radius:var(--radius); background:var(--surface)}
+.setup strong{display:block; margin-bottom:4px; color:var(--danger)}
+.setup[hidden]{display:none}
+
 .drop{
   display:block; width:100%;
   margin:32px 0 12px; padding:44px 20px; text-align:center;
   background:var(--surface); border:2px dashed var(--line); border-radius:var(--radius);
-  cursor:pointer; transition:border-color .15s, background .15s, transform .15s;
+  cursor:pointer; transition:border-color .15s, background .15s;
 }
 .drop:hover,.drop:focus-visible{border-color:var(--accent); outline:none}
 .drop:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
-.drop.over{border-color:var(--accent); border-style:solid; background:color-mix(in srgb,var(--accent) 8%,var(--surface)); transform:scale(1.005)}
+.drop.over{border-color:var(--accent); border-style:solid; background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
 .drop svg{display:block; width:40px; height:40px; stroke:var(--accent); margin:0 auto 8px}
 .drop strong{display:block; font-size:1.15rem}
 .drop span{display:block; color:var(--muted); font-size:.95rem}
 .drop input{display:none}
 .limits{font-size:.85rem; color:var(--muted); margin:0 0 24px}
+
 .linkbox{margin-bottom:36px}
 .linkbox label{display:block; font-weight:600; margin-bottom:8px}
 .linkrow{display:flex; gap:8px}
@@ -55,27 +58,25 @@ header p{margin:0; color:var(--muted); max-width:52ch}
   border:1px solid var(--line); background:var(--surface); color:var(--ink);
 }
 .linkrow input:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent); outline-offset:1px; border-color:var(--accent)}
-.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
-.btn.primary:hover{border-color:var(--accent); filter:brightness(1.08)}
-.btn.primary[disabled]{opacity:.6; cursor:wait}
 @media (max-width:520px){.linkrow{flex-direction:column}}
 
-/* Toolbar */
 .bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap}
 .bar h2{font-size:1.25rem; margin:0}
 .count{color:var(--muted); font-weight:500; margin-left:6px}
+
 .btn{
   font:inherit; font-weight:600; font-size:.9rem; padding:9px 16px; border-radius:10px; cursor:pointer;
-  border:1px solid var(--line); background:var(--surface); color:var(--ink); transition:background .12s,border-color .12s,color .12s;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink); transition:background .12s,border-color .12s;
 }
 .btn:hover{border-color:var(--ink)}
 .btn:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent); outline-offset:2px}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.6; cursor:wait}
 .btn.danger{color:var(--danger)}
 .btn.danger:hover{border-color:var(--danger)}
 .btn.confirm{background:var(--danger); border-color:var(--danger); color:#fff}
-.btn[hidden]{display:none}
 
-/* Gallery */
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column}
 .thumb{aspect-ratio:4/3; background:var(--line); border:0; padding:0; cursor:zoom-in; display:block; width:100%}
@@ -84,19 +85,19 @@ header p{margin:0; color:var(--muted); max-width:52ch}
 .meta{padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px}
 .name{font-weight:600; font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .sub{color:var(--muted); font-size:.82rem; margin-top:-8px}
+.mine{color:var(--accent); font-weight:600}
 .card .btn{width:100%}
 
-.empty{text-align:center; padding:56px 20px; color:var(--muted); border:1px solid var(--line); border-radius:var(--radius); background:var(--surface)}
+.empty,.loading{text-align:center; padding:56px 20px; color:var(--muted); border:1px solid var(--line); border-radius:var(--radius); background:var(--surface)}
 .empty strong{display:block; color:var(--ink); font-size:1.1rem; margin-bottom:4px}
+[hidden]{display:none!important}
 
-/* Lightbox */
 dialog{border:0; padding:0; background:transparent; max-width:94vw; max-height:94vh; color:#fff}
 dialog::backdrop{background:rgba(8,11,18,.82)}
 dialog img{max-width:94vw; max-height:84vh; display:block; border-radius:10px; margin:0 auto}
 dialog .cap{display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 4px 0}
 dialog .btn{background:#fff; color:#1b2433; border-color:#fff}
 
-/* Toast */
 #toasts{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:50; width:min(92vw,420px)}
 .toast{background:var(--ink); color:var(--bg); padding:11px 16px; border-radius:10px; font-size:.92rem; box-shadow:0 8px 24px rgba(0,0,0,.25); animation:pop .18s ease-out}
 .toast.error{background:var(--danger); color:#fff}
@@ -109,17 +110,22 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 <div class="wrap">
   <header>
     <h1>Image Vault</h1>
-    <p>Upload images or add GIF links, view them full size and delete the ones you don't need. Everything stays in your browser.</p>
+    <p>A shared gallery: everything uploaded here is visible to everyone. You can delete only the images you added.</p>
   </header>
+
+  <div class="setup" id="setup" hidden>
+    <strong>Setup required</strong>
+    Open <code>index.html</code> and paste your Supabase project URL and public key at the top of the script, then reload.
+  </div>
 
   <main>
     <label class="drop" id="drop" tabindex="0" role="button" aria-label="Upload images">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
       <strong>Drop images here or click to browse</strong>
       <span>You can select several files at once</span>
-      <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/avif" multiple>
+      <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif" multiple>
     </label>
-    <p class="limits">Accepted: PNG, JPG, GIF, WebP, SVG, AVIF. Max 5 MB per image.</p>
+    <p class="limits">Accepted: PNG, JPG, GIF, WebP, AVIF. Max 5 MB per image. Uploads are public.</p>
 
     <div class="linkbox">
       <label for="linkUrl">Or add an image or GIF from a link</label>
@@ -127,22 +133,23 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
         <input type="url" id="linkUrl" placeholder="https://media.giphy.com/media/.../giphy.gif" autocomplete="off" spellcheck="false">
         <button class="btn primary" id="linkAdd" type="button">Add link</button>
       </div>
-      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg or .webp. Links to a Giphy or Tenor page won't work; right-click the GIF and choose "Copy image address".</p>
+      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg or .webp. Discord links expire, so for GIFs you want to keep, upload the file instead.</p>
     </div>
 
     <div class="bar">
-      <h2>Your images<span class="count" id="count"></span></h2>
-      <button class="btn danger" id="clear" hidden>Delete all</button>
+      <h2>Everyone's images<span class="count" id="count"></span></h2>
+      <button class="btn" id="refresh" type="button">Refresh</button>
     </div>
 
+    <div id="loading" class="loading">Loading images…</div>
     <section id="grid" class="grid" aria-live="polite"></section>
     <div id="empty" class="empty" hidden>
       <strong>No images yet</strong>
-      Upload your first image to see it here.
+      Be the first to upload one.
     </div>
   </main>
 
-  <footer>Images are saved locally in this browser (IndexedDB). Clearing your site data will remove them.</footer>
+  <footer>Images are stored online and shown to all visitors. Do not upload anything private.</footer>
 </div>
 
 <dialog id="viewer" aria-label="Image preview">
@@ -152,246 +159,212 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 
 <div id="toasts" role="status"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
   "use strict";
+
+  /* ============ CONFIG: paste your Supabase values here ============ */
+  var SUPABASE_URL = "https://scjvryljcupsyfwxesim.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_nLZszm9cXBOoonUmNJDfIA_uViJAYQ4";
+  /* ================================================================== */
+
+  var BUCKET = "images";
   var MAX_SIZE = 5 * 1024 * 1024;
-  var ALLOWED = ["image/png","image/jpeg","image/gif","image/webp","image/svg+xml","image/avif"];
-  var DB_NAME = "image-vault", STORE = "images";
+  var ALLOWED = ["image/png","image/jpeg","image/gif","image/webp","image/avif"];
+  var EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp","image/avif":"avif"};
 
   var $ = function(id){ return document.getElementById(id); };
-  var drop = $("drop"), fileInput = $("file"), grid = $("grid"), empty = $("empty"),
-      countEl = $("count"), clearBtn = $("clear"), viewer = $("viewer"),
-      viewerImg = $("viewerImg"), viewerName = $("viewerName");
+  var drop=$("drop"), fileInput=$("file"), grid=$("grid"), empty=$("empty"), loadingEl=$("loading"),
+      countEl=$("count"), viewer=$("viewer"), viewerImg=$("viewerImg"), viewerName=$("viewerName"),
+      linkUrl=$("linkUrl"), linkAdd=$("linkAdd");
 
-  var db = null;            // IndexedDB handle (null = fallback to memory)
-  var items = [];           // {id, name, size, type, blob, url, added}
-  var memId = 1;
-
-  /* ---------- Storage (IndexedDB with in-memory fallback) ---------- */
-  function openDB(){
-    return new Promise(function(resolve){
-      try{
-        var req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = function(){ req.result.createObjectStore(STORE, {keyPath:"id", autoIncrement:true}); };
-        req.onsuccess = function(){ resolve(req.result); };
-        req.onerror = function(){ resolve(null); };
-      }catch(e){ resolve(null); }
-    });
-  }
-  function dbAll(){
-    return new Promise(function(resolve){
-      if(!db) return resolve([]);
-      try{
-        var r = db.transaction(STORE).objectStore(STORE).getAll();
-        r.onsuccess = function(){ resolve(r.result || []); };
-        r.onerror = function(){ resolve([]); };
-      }catch(e){ resolve([]); }
-    });
-  }
-  function dbAdd(rec){
-    return new Promise(function(resolve, reject){
-      if(!db){ rec.id = memId++; return resolve(rec); }
-      try{
-        var r = db.transaction(STORE, "readwrite").objectStore(STORE).add(rec);
-        r.onsuccess = function(){ rec.id = r.result; resolve(rec); };
-        r.onerror = function(){ reject(r.error); };
-      }catch(e){ reject(e); }
-    });
-  }
-  function dbDelete(id){
-    return new Promise(function(resolve){
-      if(!db) return resolve();
-      try{
-        var tx = db.transaction(STORE, "readwrite");
-        tx.objectStore(STORE).delete(id);
-        tx.oncomplete = resolve; tx.onerror = resolve;
-      }catch(e){ resolve(); }
-    });
-  }
-  function dbClear(){
-    return new Promise(function(resolve){
-      if(!db) return resolve();
-      try{
-        var tx = db.transaction(STORE, "readwrite");
-        tx.objectStore(STORE).clear();
-        tx.oncomplete = resolve; tx.onerror = resolve;
-      }catch(e){ resolve(); }
-    });
-  }
+  var items = [], client = null, token = "", myHash = "";
 
   /* ---------- Helpers ---------- */
-  function fmtSize(b){
-    if(b < 1024) return b + " B";
-    if(b < 1048576) return (b/1024).toFixed(1) + " KB";
-    return (b/1048576).toFixed(2) + " MB";
-  }
   function toast(msg, isError){
     var t = document.createElement("div");
     t.className = "toast" + (isError ? " error" : "");
     t.textContent = msg;
     $("toasts").appendChild(t);
-    setTimeout(function(){ t.remove(); }, 3600);
+    setTimeout(function(){ t.remove(); }, 4000);
   }
-
-  /* ---------- Rendering ---------- */
-  function render(){
-    grid.textContent = "";
-    items.slice().sort(function(a,b){ return b.added - a.added; }).forEach(function(it){
-      var card = document.createElement("article");
-      card.className = "card";
-
-      var thumb = document.createElement("button");
-      thumb.className = "thumb"; thumb.type = "button";
-      thumb.setAttribute("aria-label", "View " + it.name);
-      var img = document.createElement("img");
-      img.src = it.url; img.alt = it.name; img.loading = "lazy";
-      thumb.appendChild(img);
-      thumb.addEventListener("click", function(){ openViewer(it); });
-
-      var meta = document.createElement("div"); meta.className = "meta";
-      var name = document.createElement("div"); name.className = "name"; name.textContent = it.name; name.title = it.name;
-      var sub = document.createElement("div"); sub.className = "sub"; sub.textContent = it.type === "link" ? "Link · " + hostOf(it.src) : fmtSize(it.size);
-      var del = document.createElement("button"); del.className = "btn danger"; del.type = "button"; del.textContent = "Delete";
-      armDelete(del, function(){ removeItem(it.id); });
-
-      meta.append(name, sub, del);
-      card.append(thumb, meta);
-      grid.appendChild(card);
-    });
-
-    var n = items.length;
-    countEl.textContent = n ? "(" + n + ")" : "";
-    empty.hidden = n > 0;
-    clearBtn.hidden = n === 0;
+  function fmtSize(b){
+    if(b < 1024) return b + " B";
+    if(b < 1048576) return (b/1024).toFixed(1) + " KB";
+    return (b/1048576).toFixed(2) + " MB";
   }
-
-  // Two-step delete: first click asks for confirmation, second click deletes
+  function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return u; } }
+  function nameFromUrl(u){
+    try{ return decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).pop() || "") || hostOf(u); }
+    catch(e){ return u; }
+  }
+  function newToken(){
+    var a = new Uint8Array(16); crypto.getRandomValues(a);
+    return Array.from(a).map(function(x){ return x.toString(16).padStart(2,"0"); }).join("");
+  }
+  function getToken(){
+    var k = "image-vault-owner", t = null;
+    try{ t = localStorage.getItem(k); if(!t){ t = newToken(); localStorage.setItem(k, t); } }
+    catch(e){ t = t || newToken(); }
+    return t;
+  }
+  async function sha256(s){
+    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(buf)).map(function(x){ return x.toString(16).padStart(2,"0"); }).join("");
+  }
+  // Two-step delete: first click asks to confirm, second click deletes
   function armDelete(btn, action){
     var timer = null, original = btn.textContent;
     btn.addEventListener("click", function(){
-      if(btn.classList.contains("confirm")){
-        clearTimeout(timer); action(); return;
-      }
+      if(btn.classList.contains("confirm")){ clearTimeout(timer); btn.disabled = true; action(); return; }
       btn.classList.add("confirm"); btn.textContent = "Click again to confirm";
       timer = setTimeout(function(){ btn.classList.remove("confirm"); btn.textContent = original; }, 3000);
     });
   }
 
-  /* ---------- Actions ---------- */
-  function handleFiles(fileList){
+  /* ---------- Data ---------- */
+  async function load(silent){
+    var res = await client.from("images").select("*").order("created_at", {ascending:false}).limit(200);
+    loadingEl.hidden = true;
+    if(res.error){ if(!silent) toast("Couldn't load images. Check your Supabase setup.", true); return; }
+    items = res.data || [];
+    render();
+  }
+
+  async function uploadFiles(fileList){
     var files = Array.prototype.slice.call(fileList || []);
     if(!files.length) return;
-    var added = 0, jobs = files.map(function(f){
-      if(ALLOWED.indexOf(f.type) === -1){ toast("“" + f.name + "” is not a supported image type.", true); return Promise.resolve(); }
-      if(f.size > MAX_SIZE){ toast("“" + f.name + "” is larger than 5 MB.", true); return Promise.resolve(); }
-      var rec = {name:f.name, size:f.size, type:f.type, blob:f, added:Date.now() + added};
-      added++;
-      return dbAdd(rec).then(function(saved){
-        saved.url = URL.createObjectURL(saved.blob);
-        items.push(saved);
-      }).catch(function(){ toast("Could not save “" + f.name + "”. Storage may be full.", true); added--; });
-    });
-    Promise.all(jobs).then(function(){
-      render();
-      if(added > 0) toast(added === 1 ? "1 image uploaded." : added + " images uploaded.");
-    });
+    var ok = 0;
+    for(var i = 0; i < files.length; i++){
+      var f = files[i];
+      if(ALLOWED.indexOf(f.type) === -1){ toast("“" + f.name + "” is not a supported image type.", true); continue; }
+      if(f.size > MAX_SIZE){ toast("“" + f.name + "” is larger than 5 MB.", true); continue; }
+      var path = myHash + "/" + newToken() + "." + EXT[f.type];
+      var up = await client.storage.from(BUCKET).upload(path, f, {contentType:f.type, cacheControl:"31536000"});
+      if(up.error){ toast("Could not upload “" + f.name + "”.", true); continue; }
+      var url = client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      var ins = await client.from("images").insert({name:f.name.slice(0,200), size:f.size, kind:"file", url:url, path:path, owner_hash:myHash});
+      if(ins.error){ await client.storage.from(BUCKET).remove([path]); toast("Could not save “" + f.name + "”.", true); continue; }
+      ok++;
+    }
+    if(ok){ toast(ok === 1 ? "1 image uploaded." : ok + " images uploaded."); await load(true); }
   }
 
-  function hostOf(u){
-    try{ return new URL(u).hostname.replace(/^www\./, ""); }catch(e){ return u; }
-  }
-  function nameFromUrl(u){
-    try{
-      var last = decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).pop() || "");
-      return last || hostOf(u);
-    }catch(e){ return u; }
-  }
-
-  var linkUrl = $("linkUrl"), linkAdd = $("linkAdd");
   function addLink(){
     var raw = linkUrl.value.trim();
     if(!raw){ toast("Paste an image or GIF link first.", true); return; }
     var parsed;
     try{ parsed = new URL(raw); }catch(e){ toast("That doesn't look like a valid link.", true); return; }
     if(parsed.protocol !== "https:" && parsed.protocol !== "http:"){ toast("Only http and https links are supported.", true); return; }
-    if(items.some(function(i){ return i.src === parsed.href; })){ toast("That link is already in your list.", true); return; }
+
+    var host = parsed.hostname.replace(/^www\./,"");
+    var g = (host === "giphy.com") && parsed.pathname.match(/^\/(?:gifs|stickers)\/(?:.*-)?([A-Za-z0-9]+)\/?$/);
+    if(g){ parsed = new URL("https://media.giphy.com/media/" + g[1] + "/giphy.gif"); }
+    if(host === "tenor.com" && /^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?view\//.test(parsed.pathname)){
+      toast("That's a Tenor page link. Open it, right-click the GIF and choose “Copy image address”.", true); return;
+    }
+    if(items.some(function(i){ return i.url === parsed.href; })){ toast("That link is already in the gallery.", true); return; }
 
     linkAdd.disabled = true; linkAdd.textContent = "Checking…";
-    var probe = new Image();
     var done = function(){ linkAdd.disabled = false; linkAdd.textContent = "Add link"; };
-    probe.onload = function(){
-      var rec = {name:nameFromUrl(parsed.href), size:0, type:"link", src:parsed.href, added:Date.now()};
-      dbAdd(rec).then(function(saved){
-        saved.url = saved.src;
-        items.push(saved);
-        render(); linkUrl.value = ""; toast("Link added.");
-      }).catch(function(){ toast("Could not save the link.", true); }).then(done);
+    var probe = new Image();
+    probe.referrerPolicy = "no-referrer";
+    probe.onload = async function(){
+      var ins = await client.from("images").insert({name:nameFromUrl(parsed.href).slice(0,200), size:0, kind:"link", url:parsed.href, path:null, owner_hash:myHash});
+      if(ins.error){ toast("Could not save the link.", true); }
+      else { linkUrl.value = ""; toast("Link added."); await load(true); }
+      done();
     };
     probe.onerror = function(){
-      toast("Couldn't load an image from that link. Use a direct image or GIF address.", true);
+      if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
+        toast("Discord couldn't load that link. Discord links expire: copy a fresh one, including everything after the “?”.", true);
+      }else{
+        toast("Couldn't load an image from that link. Use a direct image or GIF address.", true);
+      }
       done();
     };
     probe.src = parsed.href;
   }
-  linkAdd.addEventListener("click", addLink);
-  linkUrl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addLink(); } });
 
-  function removeItem(id){
-    var it = items.find(function(x){ return x.id === id; });
-    if(!it) return;
-    dbDelete(id).then(function(){
-      URL.revokeObjectURL(it.url);
-      items = items.filter(function(x){ return x.id !== id; });
-      render();
-      toast("Image deleted.");
+  async function removeItem(it){
+    if(it.path){ await client.storage.from(BUCKET).remove([it.path]); }
+    var del = await client.from("images").delete().eq("id", it.id);
+    if(del.error){ toast("Could not delete that image.", true); render(); return; }
+    toast("Image deleted.");
+    await load(true);
+  }
+
+  /* ---------- Rendering ---------- */
+  function render(){
+    grid.textContent = "";
+    items.forEach(function(it){
+      var card = document.createElement("article"); card.className = "card";
+
+      var thumb = document.createElement("button");
+      thumb.className = "thumb"; thumb.type = "button";
+      thumb.setAttribute("aria-label", "View " + it.name);
+      var img = document.createElement("img");
+      img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
+      thumb.appendChild(img);
+      thumb.addEventListener("click", function(){ openViewer(it); });
+
+      var meta = document.createElement("div"); meta.className = "meta";
+      var name = document.createElement("div"); name.className = "name"; name.textContent = it.name; name.title = it.name;
+      var sub = document.createElement("div"); sub.className = "sub";
+      var mine = it.owner_hash === myHash;
+      sub.textContent = (it.kind === "link" ? "Link · " + hostOf(it.url) : fmtSize(it.size)) + (mine ? " · " : "");
+      if(mine){ var tag = document.createElement("span"); tag.className = "mine"; tag.textContent = "Yours"; sub.appendChild(tag); }
+      meta.append(name, sub);
+
+      if(mine){
+        var del = document.createElement("button"); del.className = "btn danger"; del.type = "button"; del.textContent = "Delete";
+        armDelete(del, function(){ removeItem(it); });
+        meta.appendChild(del);
+      }
+      card.append(thumb, meta);
+      grid.appendChild(card);
     });
+    countEl.textContent = items.length ? "(" + items.length + ")" : "";
+    empty.hidden = items.length > 0;
   }
 
   function openViewer(it){
+    viewerImg.referrerPolicy = "no-referrer";
     viewerImg.src = it.url; viewerImg.alt = it.name; viewerName.textContent = it.name;
     if(typeof viewer.showModal === "function") viewer.showModal(); else viewer.setAttribute("open","");
   }
 
   /* ---------- Events ---------- */
-  fileInput.addEventListener("change", function(){ handleFiles(fileInput.files); fileInput.value = ""; });
-  drop.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
-  ["dragenter","dragover"].forEach(function(ev){
-    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("over"); });
-  });
-  ["dragleave","drop"].forEach(function(ev){
-    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("over"); });
-  });
-  drop.addEventListener("drop", function(e){ handleFiles(e.dataTransfer.files); });
-  // Paste images from the clipboard
-  document.addEventListener("paste", function(e){
-    var files = e.clipboardData ? e.clipboardData.files : null;
-    if(files && files.length) handleFiles(files);
-  });
-  // Prevent the browser from opening files dropped outside the zone
-  window.addEventListener("dragover", function(e){ e.preventDefault(); });
-  window.addEventListener("drop", function(e){ e.preventDefault(); });
-
-  armDelete(clearBtn, function(){
-    dbClear().then(function(){
-      items.forEach(function(i){ URL.revokeObjectURL(i.url); });
-      items = []; render(); toast("All images deleted.");
-      clearBtn.classList.remove("confirm"); clearBtn.textContent = "Delete all";
-    });
-  });
-
-  $("viewerClose").addEventListener("click", function(){ viewer.close(); });
-  viewer.addEventListener("click", function(e){ if(e.target === viewer) viewer.close(); });
+  function bind(){
+    fileInput.addEventListener("change", function(){ uploadFiles(fileInput.files); fileInput.value = ""; });
+    drop.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
+    ["dragenter","dragover"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("over"); }); });
+    ["dragleave","drop"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("over"); }); });
+    drop.addEventListener("drop", function(e){ uploadFiles(e.dataTransfer.files); });
+    document.addEventListener("paste", function(e){ var f = e.clipboardData ? e.clipboardData.files : null; if(f && f.length) uploadFiles(f); });
+    window.addEventListener("dragover", function(e){ e.preventDefault(); });
+    window.addEventListener("drop", function(e){ e.preventDefault(); });
+    linkAdd.addEventListener("click", addLink);
+    linkUrl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addLink(); } });
+    $("refresh").addEventListener("click", function(){ load(false); });
+    $("viewerClose").addEventListener("click", function(){ viewer.close(); });
+    viewer.addEventListener("click", function(e){ if(e.target === viewer) viewer.close(); });
+    // Pick up other people's uploads without a manual refresh
+    setInterval(function(){ if(!document.hidden) load(true); }, 20000);
+  }
 
   /* ---------- Init ---------- */
-  openDB().then(function(handle){
-    db = handle;
-    if(!db) toast("Storage is unavailable. Images will be lost when you close this page.", true);
-    return dbAll();
-  }).then(function(rows){
-    items = rows.map(function(r){ r.url = r.blob ? URL.createObjectURL(r.blob) : r.src; return r; });
-    render();
-  });
+  (async function init(){
+    bind();
+    var configured = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_KEY.length > 20 && window.supabase;
+    if(!configured){ $("setup").hidden = false; loadingEl.hidden = true; empty.hidden = false; return; }
+    token = getToken();
+    myHash = await sha256(token);
+    // The secret token is sent as a header; the database only ever stores its hash
+    client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {global:{headers:{"x-owner-token":token}}});
+    load(false);
+  })();
 })();
 </script>
 </body>
