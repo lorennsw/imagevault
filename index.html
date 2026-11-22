@@ -34,6 +34,7 @@ header p{margin:0; color:var(--muted); max-width:52ch}
 
 /* Drop zone */
 .drop{
+  display:block; width:100%;
   margin:32px 0 12px; padding:44px 20px; text-align:center;
   background:var(--surface); border:2px dashed var(--line); border-radius:var(--radius);
   cursor:pointer; transition:border-color .15s, background .15s, transform .15s;
@@ -41,9 +42,9 @@ header p{margin:0; color:var(--muted); max-width:52ch}
 .drop:hover,.drop:focus-visible{border-color:var(--accent); outline:none}
 .drop:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 .drop.over{border-color:var(--accent); border-style:solid; background:color-mix(in srgb,var(--accent) 8%,var(--surface)); transform:scale(1.005)}
-.drop svg{width:40px; height:40px; stroke:var(--accent); margin-bottom:8px}
+.drop svg{display:block; width:40px; height:40px; stroke:var(--accent); margin:0 auto 8px}
 .drop strong{display:block; font-size:1.15rem}
-.drop span{color:var(--muted); font-size:.95rem}
+.drop span{display:block; color:var(--muted); font-size:.95rem}
 .drop input{display:none}
 .limits{font-size:.85rem; color:var(--muted); margin:0 0 24px}
 .linkbox{margin-bottom:36px}
