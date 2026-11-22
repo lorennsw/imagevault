@@ -82,6 +82,9 @@ header p{margin:0; color:var(--muted); max-width:56ch}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column}
 .thumb{aspect-ratio:4/3; background:var(--line); border:0; padding:0; cursor:zoom-in; display:block; width:100%}
 .thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.audiobox{padding:14px 14px 0; display:flex; flex-direction:column; align-items:center; gap:10px; background:var(--bg); border-bottom:1px solid var(--line)}
+.audiobox svg{width:44px; height:44px; stroke:var(--accent); margin-top:6px}
+.audiobox audio{width:100%; margin-bottom:14px}
 .thumb video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none}
 .thumb:focus-visible{outline:3px solid var(--accent); outline-offset:-3px}
 .meta{padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px}
@@ -121,13 +124,13 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
   </div>
 
   <main>
-    <label class="drop" id="drop" tabindex="0" role="button" aria-label="Upload images">
+    <label class="drop" id="drop" tabindex="0" role="button" aria-label="Upload files">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-      <strong>Drop images here or click to browse</strong>
+      <strong>Drop files here or click to browse</strong>
       <span>You can select several files at once</span>
-      <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif" multiple>
+      <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif,video/mp4,audio/mpeg,.mp3,.mp4" multiple>
     </label>
-    <p class="limits">Accepted: PNG, JPG, GIF, WebP, AVIF. Max 5 MB per image. Uploads are public.</p>
+    <p class="limits">Accepted: PNG, JPG, GIF, WebP, AVIF (max 5 MB) and MP3, MP4 (max 25 MB). Uploads are public.</p>
 
     <div class="linkbox">
       <label for="linkUrl">Or add an image or GIF from a link</label>
@@ -135,23 +138,23 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
         <input type="url" id="linkUrl" placeholder="https://media.giphy.com/media/.../giphy.gif" autocomplete="off" spellcheck="false">
         <button class="btn primary" id="linkAdd" type="button">Add link</button>
       </div>
-      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg, .webp, .mp4 or .webm. GIF links copied from Discord (.mp4) work too and play on a loop. Temporary Discord attachment links expire, so for those, upload the file instead.</p>
+      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg, .webp, .mp4, .webm or .mp3. GIF links copied from Discord (.mp4) work too and play on a loop. Temporary Discord attachment links expire, so for those, upload the file instead.</p>
     </div>
 
     <div class="bar">
-      <h2>Everyone's images<span class="count" id="count"></span></h2>
+      <h2>Everyone's uploads<span class="count" id="count"></span></h2>
       <button class="btn" id="refresh" type="button">Refresh</button>
     </div>
 
-    <div id="loading" class="loading">Loading images…</div>
+    <div id="loading" class="loading">Loading uploads…</div>
     <section id="grid" class="grid" aria-live="polite"></section>
     <div id="empty" class="empty" hidden>
-      <strong>No images yet</strong>
-      Be the first to upload one.
+      <strong>Nothing here yet</strong>
+      Be the first to upload something.
     </div>
   </main>
 
-  <footer>Images are stored online and shown to all visitors. Do not upload anything private.</footer>
+  <footer>Files are stored online and shown to all visitors. Do not upload anything private.</footer>
 </div>
 
 <dialog id="viewer" aria-label="Image preview">
@@ -168,14 +171,21 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
   "use strict";
 
   /* ============ CONFIG: paste your Supabase values here ============ */
-  var SUPABASE_URL = "https://scjvryljcupsyfwxesim.supabase.co";
-  var SUPABASE_KEY = "sb_publishable_nLZszm9cXBOoonUmNJDfIA_uViJAYQ4";
+  var SUPABASE_URL = "https://khpehfpphajkzwrgderu.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_EEKws8PmmIikLgEhCx9u2w_FS_zaa_k";
   /* ================================================================== */
 
   var BUCKET = "images";
-  var MAX_SIZE = 5 * 1024 * 1024;
-  var ALLOWED = ["image/png","image/jpeg","image/gif","image/webp","image/avif"];
-  var EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp","image/avif":"avif"};
+  var MAX_IMAGE = 5 * 1024 * 1024, MAX_MEDIA = 25 * 1024 * 1024;
+  var EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp","image/avif":"avif","video/mp4":"mp4","audio/mpeg":"mp3"};
+  var BY_EXT = {png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",avif:"image/avif",mp4:"video/mp4",mp3:"audio/mpeg"};
+  // Some browsers report MP3 as audio/mp3 or leave the type empty: normalise it
+  function typeOf(f){
+    var t = f.type === "audio/mp3" ? "audio/mpeg" : f.type;
+    if(EXT[t]) return t;
+    var m = /\.([a-z0-9]+)$/i.exec(f.name || "");
+    return m ? (BY_EXT[m[1].toLowerCase()] || "") : "";
+  }
 
   var $ = function(id){ return document.getElementById(id); };
   var drop=$("drop"), fileInput=$("file"), grid=$("grid"), empty=$("empty"), loadingEl=$("loading"),
@@ -196,6 +206,9 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     if(b < 1024) return b + " B";
     if(b < 1048576) return (b/1024).toFixed(1) + " KB";
     return (b/1048576).toFixed(2) + " MB";
+  }
+  function isAudio(u){
+    try{ return /\.(mp3|m4a|ogg|wav)$/i.test(new URL(u).pathname); }catch(e){ return false; }
   }
   function isVideo(u){
     try{ return /\.(mp4|webm|mov|m4v)$/i.test(new URL(u).pathname); }catch(e){ return false; }
@@ -244,10 +257,12 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     var ok = 0;
     for(var i = 0; i < files.length; i++){
       var f = files[i];
-      if(ALLOWED.indexOf(f.type) === -1){ toast("“" + f.name + "” is not a supported image type.", true); continue; }
-      if(f.size > MAX_SIZE){ toast("“" + f.name + "” is larger than 5 MB.", true); continue; }
-      var path = myHash + "/" + newToken() + "." + EXT[f.type];
-      var up = await client.storage.from(BUCKET).upload(path, f, {contentType:f.type, cacheControl:"31536000"});
+      var type = typeOf(f);
+      if(!type){ toast("“" + f.name + "” is not supported. Use PNG, JPG, GIF, WebP, AVIF, MP3 or MP4.", true); continue; }
+      var isImg = type.indexOf("image/") === 0, limit = isImg ? MAX_IMAGE : MAX_MEDIA;
+      if(f.size > limit){ toast("“" + f.name + "” is larger than " + (limit / 1048576) + " MB.", true); continue; }
+      var path = myHash + "/" + newToken() + "." + EXT[type];
+      var up = await client.storage.from(BUCKET).upload(path, f, {contentType:type, cacheControl:"31536000"});
       if(up.error){ toast("Could not upload “" + f.name + "”.", true); continue; }
       var url = client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
       var ins = await client.from("images").insert({name:f.name.slice(0,200), size:f.size, kind:"file", url:url, path:path, owner_hash:myHash});
@@ -264,6 +279,12 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     try{ parsed = new URL(raw); }catch(e){ toast("That doesn't look like a valid link.", true); return; }
     if(parsed.protocol !== "https:" && parsed.protocol !== "http:"){ toast("Only http and https links are supported.", true); return; }
 
+    // Discord proxy links (…discordapp.net/external/<code>/https/<original>) hide the real source: use it directly
+    var px = /discordapp\.(net|com)$/.test(parsed.hostname) && parsed.pathname.match(/^\/external\/[^/]+\/(https?)\/(.+)$/);
+    if(px){
+      try{ parsed = new URL(px[1] + "://" + px[2]); }catch(e){}
+    }
+
     var host = parsed.hostname.replace(/^www\./,"");
     var g = (host === "giphy.com") && parsed.pathname.match(/^\/(?:gifs|stickers)\/(?:.*-)?([A-Za-z0-9]+)\/?$/);
     if(g){ parsed = new URL("https://media.giphy.com/media/" + g[1] + "/giphy.gif"); }
@@ -274,8 +295,8 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 
     linkAdd.disabled = true; linkAdd.textContent = "Checking…";
     var done = function(){ linkAdd.disabled = false; linkAdd.textContent = "Add link"; };
-    var video = isVideo(parsed.href);
-    var probe = video ? document.createElement("video") : new Image();
+    var audioLink = isAudio(parsed.href), video = isVideo(parsed.href) || audioLink;
+    var probe = video ? document.createElement(audioLink ? "audio" : "video") : new Image();
     if(!video){ probe.referrerPolicy = "no-referrer"; }
     else{ probe.muted = true; probe.preload = "metadata"; }
     var loadedEvent = video ? "onloadedmetadata" : "onload";
@@ -291,7 +312,7 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     var fail = function(){
       if(failed) return; failed = true;
       if(video){
-        toast("Couldn't play that video link. Open it in a new tab to check that it plays, then try again.", true);
+        toast("Couldn't play that link. Open it in a new tab to check that it plays, then try again.", true);
       }else if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
         toast("Discord couldn't load that link. Discord links expire: copy a fresh one, including everything after the “?”.", true);
       }else{
@@ -318,22 +339,36 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     items.forEach(function(it){
       var card = document.createElement("article"); card.className = "card";
 
-      var thumb = document.createElement("button");
-      thumb.className = "thumb"; thumb.type = "button";
-      thumb.setAttribute("aria-label", "View " + it.name);
-      if(it.kind === "link" && isVideo(it.url)){
-        var vid = document.createElement("video");
-        vid.muted = true; vid.loop = true; vid.autoplay = true; vid.playsInline = true;
-        vid.setAttribute("muted", ""); vid.preload = "metadata";
-        vid.src = it.url;
-        thumb.appendChild(vid);
-        vid.play().catch(function(){});
+      var thumb;
+      if(isAudio(it.url)){
+        thumb = document.createElement("div"); thumb.className = "audiobox";
+        thumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+        var aud = document.createElement("audio");
+        aud.controls = true; aud.preload = "none"; aud.src = it.url;
+        aud.setAttribute("aria-label", it.name);
+        thumb.appendChild(aud);
       }else{
-        var img = document.createElement("img");
-        img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
-        thumb.appendChild(img);
+        thumb = document.createElement("button");
+        thumb.className = "thumb"; thumb.type = "button";
+        thumb.setAttribute("aria-label", "View " + it.name);
+        if(isVideo(it.url)){
+          var vid = document.createElement("video");
+          vid.playsInline = true; vid.preload = "metadata";
+          if(it.kind === "link"){
+            // Links behave like GIFs: silent, looping, autoplay
+            vid.muted = true; vid.loop = true; vid.autoplay = true; vid.setAttribute("muted", "");
+            vid.src = it.url; thumb.appendChild(vid); vid.play().catch(function(){});
+          }else{
+            // Uploaded videos show their first frame until opened
+            vid.muted = true; vid.src = it.url + "#t=0.1"; thumb.appendChild(vid);
+          }
+        }else{
+          var img = document.createElement("img");
+          img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
+          thumb.appendChild(img);
+        }
+        thumb.addEventListener("click", function(){ openViewer(it); });
       }
-      thumb.addEventListener("click", function(){ openViewer(it); });
 
       var meta = document.createElement("div"); meta.className = "meta";
       var name = document.createElement("div"); name.className = "name"; name.textContent = it.name; name.title = it.name;
@@ -356,9 +391,9 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
   }
 
   function openViewer(it){
-    var vv = $("viewerVid"), asVideo = it.kind === "link" && isVideo(it.url);
+    var vv = $("viewerVid"), asVideo = isVideo(it.url);
     viewerImg.hidden = asVideo; vv.hidden = !asVideo;
-    if(asVideo){ vv.src = it.url; vv.play().catch(function(){}); viewerImg.removeAttribute("src"); }
+    if(asVideo){ vv.muted = it.kind === "link"; vv.src = it.url; vv.play().catch(function(){}); viewerImg.removeAttribute("src"); }
     else{ vv.pause(); vv.removeAttribute("src"); viewerImg.referrerPolicy = "no-referrer"; viewerImg.src = it.url; }
     viewerImg.alt = it.name; viewerName.textContent = it.name;
     if(typeof viewer.showModal === "function") viewer.showModal(); else viewer.setAttribute("open","");
