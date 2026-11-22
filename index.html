@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>Image Vault – A shared gallery for everyone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,14 +287,20 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
       else { linkUrl.value = ""; toast("Link added."); await load(true); }
       done();
     };
-    probe.onerror = function(){
-      if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
+    var failed = false;
+    var fail = function(){
+      if(failed) return; failed = true;
+      if(video){
+        toast("Couldn't play that video link. Open it in a new tab to check that it plays, then try again.", true);
+      }else if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
         toast("Discord couldn't load that link. Discord links expire: copy a fresh one, including everything after the “?”.", true);
       }else{
         toast("Couldn't load an image from that link. Use a direct image or GIF address.", true);
       }
       done();
     };
+    probe.onerror = fail;
+    if(video){ setTimeout(function(){ if(probe.onerror && !failed){ fail(); } }, 10000); }
     probe.src = parsed.href;
   }
 
