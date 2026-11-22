@@ -276,6 +276,7 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     if(ok){ toast(ok === 1 ? "1 image uploaded." : ok + " images uploaded."); await load(true); }
   }
 
+  var forceUrl = "";
   function addLink(){
     var raw = linkUrl.value.trim();
     if(!raw){ toast("Paste an image or GIF link first.", true); return; }
@@ -297,26 +298,32 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     }
     if(items.some(function(i){ return i.url === parsed.href; })){ toast("That link is already in the gallery.", true); return; }
 
-    linkAdd.disabled = true; linkAdd.textContent = "Checking…";
+    var force = (forceUrl === parsed.href);
+    linkAdd.disabled = true; linkAdd.textContent = force ? "Adding…" : "Checking…";
     var done = function(){ linkAdd.disabled = false; linkAdd.textContent = "Add link"; };
-    var audioLink = isAudio(parsed.href), video = isVideo(parsed.href) || audioLink;
-    var probe = video ? document.createElement(audioLink ? "audio" : "video") : new Image();
-    if(!video){ probe.referrerPolicy = "no-referrer"; }
-    else{ probe.muted = true; probe.preload = "metadata"; }
-    var loadedEvent = video ? "onloadedmetadata" : "onload";
-    probe[loadedEvent] = async function(){
-      probe.onerror = null;
-      if(video){ probe.removeAttribute("src"); probe.load(); }
+    var saveLink = async function(){
       var ins = await client.from("images").insert({name:nameFromUrl(parsed.href).slice(0,200), size:0, kind:"link", url:parsed.href, path:null, owner_hash:myHash});
-      if(ins.error){ toast("Could not save the link.", true); }
-      else { linkUrl.value = ""; toast("Link added."); await load(true); }
+      if(ins.error){ console.error(ins.error); toast("Could not save the link: " + (ins.error.message || "unknown error"), true); }
+      else { linkUrl.value = ""; forceUrl = ""; toast("Link added."); await load(true); }
       done();
     };
-    var failed = false;
+    if(force){ saveLink(); return; }
+
+    var audioLink = isAudio(parsed.href), video = isVideo(parsed.href) || audioLink;
+    var probe = video ? document.createElement(audioLink ? "audio" : "video") : new Image();
+    var finished = false, timer = null;
+    var cleanup = function(){
+      clearTimeout(timer);
+      probe.onerror = null;
+      if(video){ probe.pause(); probe.removeAttribute("src"); probe.load(); probe.remove(); }
+    };
+    var ok = function(){ if(finished) return; finished = true; cleanup(); saveLink(); };
     var fail = function(){
-      if(failed) return; failed = true;
+      if(finished) return; finished = true; cleanup();
       if(video){
-        toast("Couldn't play that link. Open it in a new tab to check that it plays, then try again.", true);
+        // The check can fail even when the file plays fine (power-saving modes, some servers): let the person add it anyway
+        forceUrl = parsed.href;
+        toast("Couldn't verify that link. If it plays in a new tab, click “Add link” again to add it anyway.", true);
       }else if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
         toast("Discord couldn't load that link. Discord links expire: copy a fresh one, including everything after the “?”.", true);
       }else{
@@ -325,8 +332,17 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
       done();
     };
     probe.onerror = fail;
-    if(video){ setTimeout(function(){ if(probe.onerror && !failed){ fail(); } }, 10000); }
+    if(video){
+      probe.muted = true; probe.preload = "auto"; probe.style.display = "none";
+      ["loadedmetadata","loadeddata","canplay"].forEach(function(ev){ probe.addEventListener(ev, ok); });
+      document.body.appendChild(probe);          // attached players load more reliably than detached ones
+      timer = setTimeout(fail, 10000);
+    }else{
+      probe.referrerPolicy = "no-referrer";
+      probe.onload = ok;
+    }
     probe.src = parsed.href;
+    if(video){ var pp = probe.play(); if(pp && pp.catch){ pp.catch(function(){}); } }
   }
 
   async function removeItem(it){
