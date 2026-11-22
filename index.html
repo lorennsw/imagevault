@@ -81,6 +81,7 @@ header p{margin:0; color:var(--muted); max-width:56ch}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column}
 .thumb{aspect-ratio:4/3; background:var(--line); border:0; padding:0; cursor:zoom-in; display:block; width:100%}
 .thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.thumb video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none}
 .thumb:focus-visible{outline:3px solid var(--accent); outline-offset:-3px}
 .meta{padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px}
 .name{font-weight:600; font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -94,7 +95,7 @@ header p{margin:0; color:var(--muted); max-width:56ch}
 
 dialog{border:0; padding:0; background:transparent; max-width:94vw; max-height:94vh; color:#fff}
 dialog::backdrop{background:rgba(8,11,18,.82)}
-dialog img{max-width:94vw; max-height:84vh; display:block; border-radius:10px; margin:0 auto}
+dialog img,dialog video{max-width:94vw; max-height:84vh; display:block; border-radius:10px; margin:0 auto}
 dialog .cap{display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 4px 0}
 dialog .btn{background:#fff; color:#1b2433; border-color:#fff}
 
@@ -133,7 +134,7 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
         <input type="url" id="linkUrl" placeholder="https://media.giphy.com/media/.../giphy.gif" autocomplete="off" spellcheck="false">
         <button class="btn primary" id="linkAdd" type="button">Add link</button>
       </div>
-      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg or .webp. Discord links expire, so for GIFs you want to keep, upload the file instead.</p>
+      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg, .webp, .mp4 or .webm. GIF links copied from Discord (.mp4) work too and play on a loop. Temporary Discord attachment links expire, so for those, upload the file instead.</p>
     </div>
 
     <div class="bar">
@@ -154,6 +155,7 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 
 <dialog id="viewer" aria-label="Image preview">
   <img id="viewerImg" alt="">
+  <video id="viewerVid" controls loop muted playsinline hidden></video>
   <div class="cap"><span id="viewerName"></span><button class="btn" id="viewerClose">Close</button></div>
 </dialog>
 
@@ -193,6 +195,9 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     if(b < 1024) return b + " B";
     if(b < 1048576) return (b/1024).toFixed(1) + " KB";
     return (b/1048576).toFixed(2) + " MB";
+  }
+  function isVideo(u){
+    try{ return /\.(mp4|webm|mov|m4v)$/i.test(new URL(u).pathname); }catch(e){ return false; }
   }
   function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return u; } }
   function nameFromUrl(u){
@@ -268,9 +273,14 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 
     linkAdd.disabled = true; linkAdd.textContent = "Checking…";
     var done = function(){ linkAdd.disabled = false; linkAdd.textContent = "Add link"; };
-    var probe = new Image();
-    probe.referrerPolicy = "no-referrer";
-    probe.onload = async function(){
+    var video = isVideo(parsed.href);
+    var probe = video ? document.createElement("video") : new Image();
+    if(!video){ probe.referrerPolicy = "no-referrer"; }
+    else{ probe.muted = true; probe.preload = "metadata"; }
+    var loadedEvent = video ? "onloadedmetadata" : "onload";
+    probe[loadedEvent] = async function(){
+      probe.onerror = null;
+      if(video){ probe.removeAttribute("src"); probe.load(); }
       var ins = await client.from("images").insert({name:nameFromUrl(parsed.href).slice(0,200), size:0, kind:"link", url:parsed.href, path:null, owner_hash:myHash});
       if(ins.error){ toast("Could not save the link.", true); }
       else { linkUrl.value = ""; toast("Link added."); await load(true); }
@@ -304,9 +314,18 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
       var thumb = document.createElement("button");
       thumb.className = "thumb"; thumb.type = "button";
       thumb.setAttribute("aria-label", "View " + it.name);
-      var img = document.createElement("img");
-      img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
-      thumb.appendChild(img);
+      if(it.kind === "link" && isVideo(it.url)){
+        var vid = document.createElement("video");
+        vid.muted = true; vid.loop = true; vid.autoplay = true; vid.playsInline = true;
+        vid.setAttribute("muted", ""); vid.preload = "metadata";
+        vid.src = it.url;
+        thumb.appendChild(vid);
+        vid.play().catch(function(){});
+      }else{
+        var img = document.createElement("img");
+        img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
+        thumb.appendChild(img);
+      }
       thumb.addEventListener("click", function(){ openViewer(it); });
 
       var meta = document.createElement("div"); meta.className = "meta";
@@ -330,8 +349,11 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
   }
 
   function openViewer(it){
-    viewerImg.referrerPolicy = "no-referrer";
-    viewerImg.src = it.url; viewerImg.alt = it.name; viewerName.textContent = it.name;
+    var vv = $("viewerVid"), asVideo = it.kind === "link" && isVideo(it.url);
+    viewerImg.hidden = asVideo; vv.hidden = !asVideo;
+    if(asVideo){ vv.src = it.url; vv.play().catch(function(){}); viewerImg.removeAttribute("src"); }
+    else{ vv.pause(); vv.removeAttribute("src"); viewerImg.referrerPolicy = "no-referrer"; viewerImg.src = it.url; }
+    viewerImg.alt = it.name; viewerName.textContent = it.name;
     if(typeof viewer.showModal === "function") viewer.showModal(); else viewer.setAttribute("open","");
   }
 
@@ -350,6 +372,7 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
     $("refresh").addEventListener("click", function(){ load(false); });
     $("viewerClose").addEventListener("click", function(){ viewer.close(); });
     viewer.addEventListener("click", function(e){ if(e.target === viewer) viewer.close(); });
+    viewer.addEventListener("close", function(){ var v = $("viewerVid"); v.pause(); v.removeAttribute("src"); });
     // Pick up other people's uploads without a manual refresh
     setInterval(function(){ if(!document.hidden) load(true); }, 20000);
   }
