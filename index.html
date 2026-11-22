@@ -246,7 +246,11 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
   async function load(silent){
     var res = await client.from("images").select("*").order("created_at", {ascending:false}).limit(200);
     loadingEl.hidden = true;
-    if(res.error){ if(!silent) toast("Couldn't load images. Check your Supabase setup.", true); return; }
+    if(res.error){
+      console.error("Supabase error:", res.error);
+      if(!silent) toast("Couldn't load uploads: " + (res.error.message || "unknown error"), true);
+      return;
+    }
     items = res.data || [];
     render();
   }
