@@ -232,6 +232,7 @@ dialog.sheet[open]{animation:sheetin .35s cubic-bezier(.2,.7,.2,1)}
 .fblock audio{width:100%; color-scheme:dark}
 .audiofr{padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--surface); display:flex; flex-direction:column; align-items:center; gap:12px}
 .audiofr svg{width:40px; height:40px; stroke:var(--gold)}
+.amsg{display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; color:var(--muted); font-size:.92rem; max-width:52ch}
 .pdfbox{height:72vh; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#0c0c0d; display:grid; place-items:center; color:var(--muted); text-align:center; padding:12px}
 .pdfbox iframe{width:100%; height:100%; border:0; background:#fff; display:block; align-self:stretch; justify-self:stretch}
 .frow{display:flex; gap:8px; flex-wrap:wrap}
@@ -399,7 +400,7 @@ dialog.sheet[open]{animation:sheetin .35s cubic-bezier(.2,.7,.2,1)}
       donePrivateTitle:"Private post created", donePrivateText:"Only people with the code or the link can open it. Save this code, it is also shown on your post in the gallery.",
       codeLabel:"Your code", copyCode:"Copy code", copyLink:"Copy link", done:"Done", copied:"Copied to the clipboard.",
       view:"Open post", download:"Download", downloadAll:"Download all", del:"Delete", confirmDel:"Click again to confirm",
-      private:"Private", yours:"Yours", openTab:"Open in new tab", pdfLoading:"Loading PDF…", pdfFail:"Couldn't show this PDF here. Use “Open in new tab”.",
+      private:"Private", yours:"Yours", openTab:"Open in new tab", pdfLoading:"Loading PDF…", pdfFail:"Couldn't show this PDF here. Use “Open in new tab”.", audioFail:"This audio can't be played in the browser. The file may be damaged or not a real MP3. Try downloading it.",
       nothing:"Add a description, a file or a link first.", unsupported:"That file type is not supported. Use images, GIF, MP4, MP3 or PDF.",
       tooBig:"That file is larger than {mb} MB.", tooMany:"You can add up to {n} files per post.",
       badLink:"That doesn't look like a valid link.", httpOnly:"Only http and https links are supported.",
@@ -429,7 +430,7 @@ dialog.sheet[open]{animation:sheetin .35s cubic-bezier(.2,.7,.2,1)}
       donePrivateTitle:"Publicación privada creada", donePrivateText:"Solo pueden abrirla quienes tengan el código o el enlace. Guarda este código, también aparece en tu publicación de la galería.",
       codeLabel:"Tu código", copyCode:"Copiar código", copyLink:"Copiar enlace", done:"Listo", copied:"Copiado al portapapeles.",
       view:"Abrir publicación", download:"Descargar", downloadAll:"Descargar todo", del:"Borrar", confirmDel:"Toca otra vez para confirmar",
-      private:"Privada", yours:"Tuya", openTab:"Abrir en pestaña nueva", pdfLoading:"Cargando PDF…", pdfFail:"No se pudo mostrar este PDF aquí. Usa “Abrir en pestaña nueva”.",
+      private:"Privada", yours:"Tuya", openTab:"Abrir en pestaña nueva", pdfLoading:"Cargando PDF…", pdfFail:"No se pudo mostrar este PDF aquí. Usa “Abrir en pestaña nueva”.", audioFail:"Este audio no se puede reproducir en el navegador. Puede que el archivo esté dañado o no sea un MP3 de verdad. Prueba descargándolo.",
       nothing:"Agrega primero una descripción, un archivo o un link.", unsupported:"Ese tipo de archivo no está permitido. Usa imágenes, GIF, MP4, MP3 o PDF.",
       tooBig:"Ese archivo pesa más de {mb} MB.", tooMany:"Puedes agregar hasta {n} archivos por publicación.",
       badLink:"Eso no parece un link válido.", httpOnly:"Solo se aceptan links http y https.",
@@ -710,7 +711,29 @@ dialog.sheet[open]{animation:sheetin .35s cubic-bezier(.2,.7,.2,1)}
       media.src = u; wrap.appendChild(media);
     }else if(f.type === "audio"){
       var af = el("div", "audiofr"); af.innerHTML = ICON.audio;
-      media = el("audio"); media.controls = true; media.preload = "none"; media.src = u; af.appendChild(media); wrap.appendChild(af);
+      media = el("audio"); media.controls = true; media.preload = "metadata";
+      var amsg = el("div", "amsg"); amsg.hidden = true;
+      var triedBlob = false, audioEl = media;
+      var audioFail = function(){
+        if(token !== viewToken) return;
+        var code = audioEl.error ? audioEl.error.code : 0;
+        console.error("Audio error", code, u);
+        audioEl.hidden = true; amsg.hidden = false; amsg.textContent = "";
+        var tx = el("span"); tx.textContent = t("audioFail") + (code ? " (" + code + ")" : ""); amsg.appendChild(tx);
+        var op = el("a", "btn"); op.href = u; op.target = "_blank"; op.rel = "noopener"; op.textContent = t("openTab"); amsg.appendChild(op);
+      };
+      // If the browser can't stream it directly, load the whole file and play it from memory
+      audioEl.addEventListener("error", function(){
+        if(token !== viewToken) return;
+        if(triedBlob){ audioFail(); return; }
+        triedBlob = true;
+        fetch(u, {referrerPolicy:"no-referrer"}).then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.blob(); }).then(function(b){
+          if(token !== viewToken) return;
+          var bu = URL.createObjectURL(new Blob([b], {type:"audio/mpeg"})); blobUrls.push(bu);
+          audioEl.src = bu; audioEl.load();
+        }).catch(function(e){ console.error(e); audioFail(); });
+      });
+      media.src = u; af.appendChild(media); af.appendChild(amsg); wrap.appendChild(af);
     }else{
       var box = el("div", "pdfbox"); box.textContent = t("pdfLoading"); wrap.appendChild(box);
       var tab = el("a", "btn"); tab.target = "_blank"; tab.rel = "noopener"; tab.href = u; tab.textContent = t("openTab");
