@@ -4,182 +4,360 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>Image Vault – A shared gallery for everyone</title>
+<meta name="theme-color" content="#0a0a0b">
+<title>Image Vault</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#eef1f6; --surface:#ffffff; --ink:#1b2433; --muted:#5f6b80;
-  --line:#d5dbe6; --accent:#2f5bff; --accent-ink:#ffffff; --danger:#c92a5b;
-  --radius:14px;
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#10151f; --surface:#192130; --ink:#e8edf6; --muted:#98a4ba;
-    --line:#2b3649; --accent:#6f8dff; --accent-ink:#0d1220; --danger:#ff6b93;
-    color-scheme:dark;
-  }
+  --bg:#0a0a0b; --bg2:#0f0f11; --surface:#141416; --surface2:#1b1b1f;
+  --ink:#f3f0ea; --muted:#8f8d89; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.17);
+  --gold:#d8c39a; --gold-soft:rgba(216,195,154,.35); --accent-ink:#17130a; --danger:#e5707e;
+  --radius:18px;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  line-height:1.5; min-height:100vh;
+  margin:0; min-height:100vh; color:var(--ink);
+  font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  line-height:1.55; -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(1000px 480px at 50% -160px, rgba(216,195,154,.11), transparent 70%),
+    var(--bg);
 }
-.wrap{max-width:1040px; margin:0 auto; padding:48px 20px 80px}
-header h1{font-size:clamp(2rem,5vw,3.25rem); font-weight:800; letter-spacing:-.03em; margin:0 0 6px; line-height:1.05}
-header p{margin:0; color:var(--muted); max-width:56ch}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.07;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+::selection{background:rgba(216,195,154,.3)}
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#2a2a2e; border-radius:8px; border:3px solid var(--bg)}
+.wrap{max-width:1120px; margin:0 auto; padding:72px 22px 90px; position:relative}
 
-.setup{margin:24px 0; padding:16px 18px; border:1px solid var(--danger); border-radius:var(--radius); background:var(--surface)}
-.setup strong{display:block; margin-bottom:4px; color:var(--danger)}
-.setup[hidden]{display:none}
+.eyebrow{display:inline-flex; align-items:center; gap:10px; font-size:.74rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:22px}
+.eyebrow .dot{width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 14px 2px rgba(216,195,154,.7)}
+header h1{
+  font-family:"Instrument Serif",Georgia,"Times New Roman",serif; font-weight:400;
+  font-size:clamp(3.4rem,10vw,7rem); line-height:.92; letter-spacing:-.025em; margin:0 0 22px;
+}
+header h1 em{
+  font-style:italic; padding-right:.06em;
+  background:linear-gradient(120deg,#f6ecd2 10%,#c8b07e 90%); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+header p{margin:0; color:var(--muted); max-width:54ch; font-size:1.06rem}
 
+.hint{display:flex; justify-content:space-between; gap:12px; font-size:.8rem; color:#6d6b67; margin-top:8px}
 .drop{
-  display:block; width:100%;
-  margin:16px 0 12px; padding:44px 20px; text-align:center;
-  background:var(--surface); border:2px dashed var(--line); border-radius:var(--radius);
-  cursor:pointer; transition:border-color .15s, background .15s;
+  display:block; width:100%; margin:18px 0 12px; padding:54px 20px; text-align:center; cursor:pointer;
+  background:linear-gradient(180deg,var(--surface),var(--bg2));
+  border:1px dashed rgba(255,255,255,.16); border-radius:22px;
+  transition:border-color .25s, box-shadow .25s, transform .25s;
 }
-.drop:hover,.drop:focus-visible{border-color:var(--accent); outline:none}
-.drop:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
-.drop.over{border-color:var(--accent); border-style:solid; background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
-.drop svg{display:block; width:40px; height:40px; stroke:var(--accent); margin:0 auto 8px}
-.drop strong{display:block; font-size:1.15rem}
-.drop span{display:block; color:var(--muted); font-size:.95rem}
+.drop:hover,.drop:focus-visible{border-color:var(--gold-soft); outline:none; box-shadow:0 20px 60px -30px rgba(216,195,154,.28)}
+.drop.over{border-style:solid; border-color:var(--gold); box-shadow:0 0 0 4px rgba(216,195,154,.1), 0 30px 70px -30px rgba(216,195,154,.4); transform:scale(1.008)}
+.drop svg{display:block; width:42px; height:42px; stroke:var(--gold); margin:0 auto 14px}
+.drop strong{display:block; font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:1.7rem; letter-spacing:-.01em}
+.drop span{display:block; color:var(--muted); font-size:.95rem; margin-top:2px}
 .drop input{display:none}
-.limits{font-size:.85rem; color:var(--muted); margin:0 0 24px}
-
-.linkbox{margin-bottom:36px}
-.linkbox label{display:block; font-weight:600; margin-bottom:8px}
-.linkrow{display:flex; gap:8px}
-.linkrow input{
-  flex:1; min-width:0; font:inherit; padding:10px 14px; border-radius:10px;
-  border:1px solid var(--line); background:var(--surface); color:var(--ink);
-}
-.linkrow input:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent); outline-offset:1px; border-color:var(--accent)}
-@media (max-width:520px){.linkrow{flex-direction:column}}
-
-.bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap}
-.bar h2{font-size:1.25rem; margin:0}
-.count{color:var(--muted); font-weight:500; margin-left:6px}
+.limits{font-size:.84rem; color:#6d6b67; margin:0 0 26px}
 
 .btn{
-  font:inherit; font-weight:600; font-size:.9rem; padding:9px 16px; border-radius:10px; cursor:pointer;
-  border:1px solid var(--line); background:var(--surface); color:var(--ink); transition:background .12s,border-color .12s;
+  font:inherit; font-weight:600; font-size:.9rem; padding:11px 20px; border-radius:12px; cursor:pointer;
+  border:1px solid var(--line); background:var(--surface2); color:var(--ink);
+  transition:background .2s, border-color .2s, transform .2s, filter .2s;
 }
-.btn:hover{border-color:var(--ink)}
-.btn:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent); outline-offset:2px}
-.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
-.btn.primary:hover{filter:brightness(1.08)}
-.btn[disabled]{opacity:.6; cursor:wait}
+.btn:hover{border-color:var(--line2); background:#222226}
+.btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.btn.primary{background:linear-gradient(180deg,#ecdfbd,#cbb687); border-color:transparent; color:var(--accent-ink); font-weight:700}
+.btn.primary:hover{filter:brightness(1.07); transform:translateY(-1px); background:linear-gradient(180deg,#ecdfbd,#cbb687)}
+.btn[disabled]{opacity:.55; cursor:wait; transform:none}
 .btn.danger{color:var(--danger)}
-.btn.danger:hover{border-color:var(--danger)}
-.btn.confirm{background:var(--danger); border-color:var(--danger); color:#fff}
-
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}
-.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column}
-.thumb{aspect-ratio:4/3; background:var(--line); border:0; padding:0; cursor:zoom-in; display:block; width:100%}
-.thumb img{width:100%; height:100%; object-fit:cover; display:block}
-.audiobox{padding:14px 14px 0; display:flex; flex-direction:column; align-items:center; gap:10px; background:var(--bg); border-bottom:1px solid var(--line)}
-.audiobox svg{width:44px; height:44px; stroke:var(--accent); margin-top:6px}
-.audiobox audio{width:100%; margin-bottom:14px}
-.thumb video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none}
-.thumb:focus-visible{outline:3px solid var(--accent); outline-offset:-3px}
-.meta{padding:12px 14px 14px; display:flex; flex-direction:column; gap:10px}
-.name{font-weight:600; font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.sub{color:var(--muted); font-size:.82rem; margin-top:-8px}
-.mine{color:var(--accent); font-weight:600}
-.caption{font-size:.92rem; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; cursor:pointer}
-.caption.expanded{display:block; -webkit-line-clamp:unset}
-.actions{display:flex; gap:8px}
-.actions .btn{flex:1; text-align:center}
+.btn.danger:hover{border-color:rgba(229,112,126,.55); background:rgba(229,112,126,.08)}
+.btn.confirm{background:var(--danger); border-color:var(--danger); color:#1c0a0d}
 a.btn{display:inline-block; text-decoration:none; color:var(--ink)}
-.captionbox{margin-top:28px}
-.captionbox label{display:block; font-weight:600; margin-bottom:8px}
-.captionbox textarea{
-  width:100%; resize:vertical; min-height:64px; font:inherit; padding:10px 14px; border-radius:10px;
-  border:1px solid var(--line); background:var(--surface); color:var(--ink);
-}
-.captionbox textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent); outline-offset:1px; border-color:var(--accent)}
-.hint{display:flex; justify-content:space-between; gap:12px; font-size:.82rem; color:var(--muted); margin-top:6px}
-#viewerCap{font-size:.92rem; opacity:.85; white-space:pre-wrap; overflow-wrap:anywhere; max-width:70ch; margin-top:2px}
 
-.empty,.loading{text-align:center; padding:56px 20px; color:var(--muted); border:1px solid var(--line); border-radius:var(--radius); background:var(--surface)}
-.empty strong{display:block; color:var(--ink); font-size:1.1rem; margin-bottom:4px}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; flex-wrap:wrap; padding-top:34px; border-top:1px solid var(--line)}
+.bar h2{font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:2.2rem; letter-spacing:-.01em; margin:0; display:flex; align-items:center; gap:14px}
+.count{font-family:"Hanken Grotesk",sans-serif; font-size:.78rem; font-weight:600; color:var(--gold); padding:3px 11px; border:1px solid var(--gold-soft); border-radius:99px; letter-spacing:.04em}
+.count:empty{display:none}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:22px}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+  display:flex; flex-direction:column;
+  transition:transform .35s cubic-bezier(.2,.7,.2,1), border-color .35s, box-shadow .35s;
+}
+.card:hover{transform:translateY(-4px); border-color:var(--gold-soft); box-shadow:0 30px 60px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(216,195,154,.05)}
+.card.enter{animation:rise .7s cubic-bezier(.2,.7,.2,1) both; animation-delay:calc(var(--i,0) * 70ms)}
+@keyframes rise{from{opacity:0; transform:translateY(20px)}to{opacity:1; transform:none}}
+.thumb{position:relative; aspect-ratio:4/3; background:#0c0c0d; border:0; padding:0; cursor:zoom-in; display:block; width:100%; overflow:hidden}
+.thumb::after{content:""; position:absolute; inset:auto 0 0 0; height:40%; background:linear-gradient(180deg,transparent,rgba(10,10,11,.55)); pointer-events:none}
+.thumb img,.thumb video{width:100%; height:100%; object-fit:cover; display:block; transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.thumb video{pointer-events:none}
+.card:hover .thumb img,.card:hover .thumb video{transform:scale(1.05)}
+.thumb:focus-visible{outline:2px solid var(--gold); outline-offset:-2px}
+.meta{padding:16px 18px 18px; display:flex; flex-direction:column; gap:10px; flex:1}
+.caption{color:#c9c6c0; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; cursor:pointer}
+.caption.expanded{display:block; -webkit-line-clamp:unset}
+.actions{display:flex; gap:8px; margin-top:auto; padding-top:4px}
+.actions .btn{flex:1; text-align:center; padding:9px 12px; font-size:.86rem}
+
+.empty,.loading{text-align:center; padding:72px 20px; color:var(--muted); border:1px dashed var(--line2); border-radius:22px; background:var(--surface)}
+.empty strong{display:block; color:var(--ink); font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:1.8rem; margin-bottom:4px}
 [hidden]{display:none!important}
 
-dialog{border:0; padding:0; background:transparent; max-width:94vw; max-height:94vh; color:#fff}
-dialog::backdrop{background:rgba(8,11,18,.82)}
-dialog img,dialog video{max-width:94vw; max-height:84vh; display:block; border-radius:10px; margin:0 auto}
-dialog .cap{display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 4px 0}
-dialog .btn{background:#fff; color:#1b2433; border-color:#fff}
+/* Toasts */
+#toasts{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); display:flex; flex-direction:column; gap:10px; z-index:80; width:min(92vw,440px)}
+.toast{
+  background:rgba(27,27,31,.92); backdrop-filter:blur(14px); color:var(--ink);
+  padding:13px 18px; border-radius:14px; font-size:.92rem; border:1px solid var(--line2); border-left:3px solid var(--gold);
+  box-shadow:0 20px 50px -15px rgba(0,0,0,.8); animation:pop .25s cubic-bezier(.2,.7,.2,1);
+}
+.toast.error{border-left-color:var(--danger); color:#ffe0e4}
+@keyframes pop{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
 
-#toasts{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:50; width:min(92vw,420px)}
-.toast{background:var(--ink); color:var(--bg); padding:11px 16px; border-radius:10px; font-size:.92rem; box-shadow:0 8px 24px rgba(0,0,0,.25); animation:pop .18s ease-out}
-.toast.error{background:var(--danger); color:#fff}
-@keyframes pop{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+footer{margin-top:72px; padding-top:26px; border-top:1px solid var(--line); color:#6d6b67; font-size:.84rem; max-width:80ch}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
-footer{margin-top:56px; color:var(--muted); font-size:.85rem}
+@media (max-width:560px){.wrap{padding:52px 16px 70px} .grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}}
+
+
+/* ===== v2 additions ===== */
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.langbtn{
+  position:absolute; top:22px; right:22px; width:50px; height:38px; display:grid; place-items:center; padding:0;
+  border:1px solid var(--line2); border-radius:11px; background:var(--surface); cursor:pointer;
+  transition:border-color .2s, transform .2s, background .2s;
+}
+.langbtn:hover{border-color:var(--gold-soft); background:var(--surface2); transform:translateY(-1px)}
+.langbtn:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.langbtn svg{width:28px; height:20px; display:block; border-radius:3px; box-shadow:0 0 0 1px rgba(255,255,255,.14)}
+.heroActions{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:36px 0 56px}
+.btn.big{padding:15px 38px; font-size:1.02rem; border-radius:14px}
+.find{display:flex; gap:8px; flex:1; min-width:240px; max-width:400px; margin-left:auto}
+.find input,.sheet textarea,.sheet .linkrow input{
+  width:100%; font:inherit; color:var(--ink); background:var(--surface);
+  border:1px solid var(--line); border-radius:14px; padding:12px 16px; transition:border-color .2s, box-shadow .2s, background .2s;
+}
+.find input{flex:1; min-width:0; text-transform:uppercase; letter-spacing:.06em}
+.find input::placeholder{text-transform:none; letter-spacing:0}
+.find input::placeholder,.sheet textarea::placeholder,.sheet .linkrow input::placeholder{color:#5d5c59}
+.find input:focus,.sheet textarea:focus,.sheet .linkrow input:focus{outline:none; border-color:var(--gold-soft); box-shadow:0 0 0 4px rgba(216,195,154,.09); background:var(--surface2)}
+@media (max-width:640px){.find{margin-left:0; max-width:none; width:100%}}
+.bar{margin-top:0}
+
+.badge{display:inline-flex; align-items:center; gap:6px; font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:99px; border:1px solid var(--line2); color:var(--muted)}
+.badge svg{width:12px; height:12px; stroke:currentColor}
+.badge.private{color:var(--gold); border-color:var(--gold-soft)}
+.badge.mine{color:var(--ink); border-color:var(--line2)}
+.codechip{font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:.14em; color:var(--gold); font-size:.82rem; font-weight:600}
+.subrow{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px}
+.more{position:absolute; right:10px; top:10px; z-index:2; font-size:.78rem; font-weight:700; padding:4px 10px; border-radius:99px; background:rgba(10,10,11,.72); border:1px solid var(--line2); backdrop-filter:blur(6px)}
+.iconcover{width:100%; height:100%; display:grid; place-items:center; align-content:center; gap:8px; background:radial-gradient(220px 140px at 50% 30%, rgba(216,195,154,.12), transparent), var(--bg2)}
+.iconcover svg{width:52px; height:52px; stroke:var(--gold)}
+.iconcover span{font-size:.74rem; font-weight:700; letter-spacing:.16em; color:var(--muted)}
+.card .caption{font-size:.95rem}
+.card.textonly .meta{padding-top:20px}
+.actions{flex-wrap:wrap}
+.actions .btn{flex:1 1 auto}
+
+/* Sheets (publish + viewer) */
+dialog.sheet{
+  border:1px solid var(--line2); border-radius:26px; padding:0; background:var(--bg2); color:var(--ink);
+  width:min(94vw,700px); max-width:94vw; max-height:92vh; overflow:auto;
+  box-shadow:0 50px 120px -20px rgba(0,0,0,.95), 0 0 0 1px rgba(216,195,154,.04);
+}
+dialog.sheet.viewer{width:min(96vw,980px)}
+dialog.sheet::backdrop{background:rgba(4,4,5,.86); backdrop-filter:blur(10px)}
+dialog.sheet[open]{animation:sheetin .35s cubic-bezier(.2,.7,.2,1)}
+@keyframes sheetin{from{opacity:0; transform:translateY(16px) scale(.985)}to{opacity:1; transform:none}}
+.sheetin{padding:28px 30px 26px}
+@media (max-width:520px){.sheetin{padding:22px 18px 20px}}
+.sheethead{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:6px}
+.sheethead h2{font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:2.1rem; letter-spacing:-.01em; margin:0; line-height:1.1}
+.x{flex:none; width:38px; height:38px; border-radius:50%; border:1px solid var(--line2); background:var(--surface); color:var(--ink); font-size:1.3rem; line-height:1; cursor:pointer; transition:background .2s, border-color .2s}
+.x:hover{background:var(--surface2); border-color:var(--gold-soft)}
+.x:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.lab{display:block; font-size:.76rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:24px 0 10px}
+.sheet textarea{resize:vertical; min-height:80px}
+.sheet .drop{padding:34px 16px; margin:0 0 8px}
+.sheet .drop strong{font-size:1.5rem}
+.sheet .limits{margin:0 0 6px; font-size:.82rem}
+.sheet .linkrow{display:flex; gap:10px}
+@media (max-width:520px){.sheet .linkrow{flex-direction:column}}
+.pending{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px; margin:14px 0 4px}
+.pending:empty{display:none}
+.ptile{position:relative; aspect-ratio:1; border-radius:14px; overflow:hidden; background:#0c0c0d; border:1px solid var(--line); display:grid; place-items:center}
+.ptile img,.ptile video{width:100%; height:100%; object-fit:cover; display:block}
+.ptile svg.ic{width:34px; height:34px; stroke:var(--gold)}
+.ptile .rm{position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; border:0; background:rgba(0,0,0,.75); color:#fff; cursor:pointer; font-size:15px; line-height:1; display:grid; place-items:center; padding:0}
+.ptile .rm:hover{background:var(--danger); color:#1c0a0d}
+.ptile .tag{position:absolute; left:6px; bottom:6px; font-size:.62rem; font-weight:700; letter-spacing:.1em; padding:2px 7px; border-radius:6px; background:rgba(0,0,0,.75); color:var(--gold)}
+.choices{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:520px){.choices{grid-template-columns:1fr}}
+.choice{position:relative; display:block; cursor:pointer}
+.choice input{position:absolute; opacity:0; inset:0; margin:0; cursor:pointer}
+.cbody{display:block; height:100%; padding:16px 18px; border:1px solid var(--line); border-radius:16px; background:var(--surface); transition:border-color .2s, background .2s, box-shadow .2s}
+.cbody strong{display:flex; align-items:center; gap:8px; font-weight:600}
+.cbody strong svg{width:16px; height:16px; stroke:var(--gold)}
+.cbody small{display:block; color:var(--muted); margin-top:5px; font-size:.84rem; line-height:1.45}
+.choice:hover .cbody{border-color:var(--line2)}
+.choice input:checked + .cbody{border-color:var(--gold); background:rgba(216,195,154,.07); box-shadow:0 0 0 3px rgba(216,195,154,.1)}
+.choice input:focus-visible + .cbody{outline:2px solid var(--gold); outline-offset:2px}
+.progress{margin-top:22px}
+.pbar{height:6px; border-radius:99px; background:var(--surface2); overflow:hidden}
+.pbar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#ecdfbd,#cbb687); transition:width .3s}
+#ptext{display:block; margin-top:8px; font-size:.84rem; color:var(--muted)}
+.sheetfoot{display:flex; justify-content:flex-end; gap:10px; margin-top:28px; flex-wrap:wrap}
+.done{text-align:center; padding:10px 0 0}
+.doneicon{width:64px; height:64px; margin:6px auto 14px; border-radius:50%; display:grid; place-items:center; border:1px solid var(--gold-soft); background:rgba(216,195,154,.08)}
+.doneicon svg{width:30px; height:30px; stroke:var(--gold)}
+.done h3{font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:2rem; margin:0 0 6px}
+.done p{color:var(--muted); margin:0 auto; max-width:46ch}
+.bigcode{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:clamp(2rem,9vw,3.3rem); letter-spacing:.28em; padding:18px 10px 18px 24px; color:var(--gold); border:1px dashed var(--gold-soft); border-radius:18px; background:rgba(216,195,154,.05); user-select:all; margin:8px 0 16px}
+.row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.done .sheetfoot{justify-content:center}
+
+/* Viewer */
+.vmeta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:38px}
+.vcap{white-space:pre-wrap; overflow-wrap:anywhere; color:#d4d1cb; font-size:1.02rem; margin-top:10px; max-width:75ch}
+.vcap:empty{display:none}
+.vbody{display:flex; flex-direction:column; gap:26px; margin-top:20px}
+.fblock{display:flex; flex-direction:column; gap:10px}
+.fblock img,.fblock video{max-height:76vh; object-fit:contain; border-radius:16px; background:#0c0c0d; display:block}
+.fblock video{width:100%}
+.fblock img{max-width:100%; width:auto; height:auto; align-self:center}
+.fblock audio{width:100%; color-scheme:dark}
+.audiofr{padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--surface); display:flex; flex-direction:column; align-items:center; gap:12px}
+.audiofr svg{width:40px; height:40px; stroke:var(--gold)}
+.pdfbox{height:72vh; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#0c0c0d; display:grid; place-items:center; color:var(--muted); text-align:center; padding:12px}
+.pdfbox iframe{width:100%; height:100%; border:0; background:#fff; display:block; align-self:stretch; justify-self:stretch}
+.frow{display:flex; gap:8px; flex-wrap:wrap}
+.frow .btn{padding:9px 16px; font-size:.86rem}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <button class="langbtn" id="lang" type="button"></button>
+
   <header>
-    <h1>Image Vault</h1>
-    <p>A shared gallery: everything uploaded here is visible to everyone. You can delete only the images you added.</p>
+    <div class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow"></span></div>
+    <h1>Image <em>Vault</em></h1>
+    <p data-i18n="subtitle"></p>
+    <div class="heroActions">
+      <button class="btn primary big" id="openComposer" type="button" data-i18n="publish"></button>
+      <form class="find" id="findForm" autocomplete="off">
+        <label class="sr" for="findInput" data-i18n="findLabel"></label>
+        <input id="findInput" type="text" maxlength="200" spellcheck="false" data-i18n-ph="findPh">
+        <button class="btn" type="submit" data-i18n="find"></button>
+      </form>
+    </div>
   </header>
 
-  <div class="setup" id="setup" hidden>
-    <strong>Setup required</strong>
-    Open <code>index.html</code> and paste your Supabase project URL and public key at the top of the script, then reload.
-  </div>
-
   <main>
-    <div class="captionbox">
-      <label for="caption">Description (optional)</label>
-      <textarea id="caption" rows="2" maxlength="500" placeholder="Write something about what you are about to share…"></textarea>
-      <div class="hint"><span>Added to everything you upload or link next.</span><span id="capCount">0 / 500</span></div>
-    </div>
-
-    <label class="drop" id="drop" tabindex="0" role="button" aria-label="Upload files">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-      <strong>Drop files here or click to browse</strong>
-      <span>You can select several files at once</span>
-      <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif,video/mp4,audio/mpeg,.mp3,.mp4" multiple>
-    </label>
-    <p class="limits">Accepted: PNG, JPG, GIF, WebP, AVIF (max 5 MB) and MP3, MP4 (max 25 MB). Uploads are public.</p>
-
-    <div class="linkbox">
-      <label for="linkUrl">Or add an image or GIF from a link</label>
-      <div class="linkrow">
-        <input type="url" id="linkUrl" placeholder="https://media.giphy.com/media/.../giphy.gif" autocomplete="off" spellcheck="false">
-        <button class="btn primary" id="linkAdd" type="button">Add link</button>
-      </div>
-      <p class="limits" style="margin:8px 0 0">Use a direct link that ends in .gif, .png, .jpg, .webp, .mp4, .webm or .mp3. GIF links copied from Discord (.mp4) work too and play on a loop. Temporary Discord attachment links expire, so for those, upload the file instead.</p>
-    </div>
-
     <div class="bar">
-      <h2>Everyone's uploads<span class="count" id="count"></span></h2>
-      <button class="btn" id="refresh" type="button">Refresh</button>
+      <h2><span data-i18n="galleryTitle"></span><span class="count" id="count"></span></h2>
+      <button class="btn" id="refresh" type="button" data-i18n="refresh"></button>
     </div>
-
-    <div id="loading" class="loading">Loading uploads…</div>
+    <div id="loading" class="loading" data-i18n="loading"></div>
     <section id="grid" class="grid" aria-live="polite"></section>
     <div id="empty" class="empty" hidden>
-      <strong>Nothing here yet</strong>
-      Be the first to upload something.
+      <strong data-i18n="emptyTitle"></strong>
+      <span data-i18n="emptyText"></span>
     </div>
   </main>
 
-  <footer>Files are stored online and shown to all visitors. Do not upload anything private.</footer>
+  <footer data-i18n="footer"></footer>
 </div>
 
-<dialog id="viewer" aria-label="Image preview">
-  <img id="viewerImg" alt="">
-  <video id="viewerVid" controls loop muted playsinline hidden></video>
-  <div class="cap"><div><strong id="viewerName"></strong><div id="viewerCap"></div></div><button class="btn" id="viewerClose">Close</button></div>
+<!-- Publish -->
+<dialog id="composer" class="sheet" aria-labelledby="composerTitle">
+  <div class="sheetin">
+    <div id="stepForm">
+      <div class="sheethead">
+        <h2 id="composerTitle" data-i18n="composerTitle"></h2>
+        <button class="x" id="composerX" type="button" data-i18n-aria="close">×</button>
+      </div>
+
+      <label class="lab" for="caption" data-i18n="descLabel"></label>
+      <textarea id="caption" rows="3" maxlength="500" data-i18n-ph="descPh"></textarea>
+      <div class="hint"><span></span><span id="capCount">0 / 500</span></div>
+
+      <div class="lab" data-i18n="filesLabel"></div>
+      <label class="drop" id="drop" tabindex="0" role="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <strong data-i18n="dropTitle"></strong>
+        <span data-i18n="dropSub"></span>
+        <input type="file" id="file" multiple accept="image/png,image/jpeg,image/gif,image/webp,image/avif,video/mp4,audio/mpeg,application/pdf,.mp3,.mp4,.pdf">
+      </label>
+      <p class="limits" data-i18n="limits"></p>
+      <div class="pending" id="pending"></div>
+
+      <label class="lab" for="linkUrl" data-i18n="linkLabel"></label>
+      <div class="linkrow">
+        <input type="url" id="linkUrl" autocomplete="off" spellcheck="false" placeholder="https://…/giphy.gif">
+        <button class="btn" id="linkAdd" type="button" data-i18n="addLink"></button>
+      </div>
+      <p class="limits" style="margin-top:8px" data-i18n="linkHint"></p>
+
+      <div class="lab" data-i18n="visLabel"></div>
+      <div class="choices" role="radiogroup">
+        <label class="choice">
+          <input type="radio" name="vis" value="public" checked>
+          <span class="cbody">
+            <strong><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><span data-i18n="visPublic"></span></strong>
+            <small data-i18n="visPublicDesc"></small>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="vis" value="private">
+          <span class="cbody">
+            <strong><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="visPrivate"></span></strong>
+            <small data-i18n="visPrivateDesc"></small>
+          </span>
+        </label>
+      </div>
+
+      <div class="progress" id="progress" hidden>
+        <div class="pbar"><i id="pfill"></i></div>
+        <span id="ptext"></span>
+      </div>
+
+      <div class="sheetfoot">
+        <button class="btn" id="cancel" type="button" data-i18n="cancel"></button>
+        <button class="btn primary" id="publishNow" type="button" data-i18n="publish"></button>
+      </div>
+    </div>
+
+    <div class="done" id="stepDone" hidden>
+      <div class="doneicon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h3 id="doneTitle"></h3>
+      <p id="doneText"></p>
+      <div id="codeBox" hidden>
+        <div class="lab" style="margin-top:22px" data-i18n="codeLabel"></div>
+        <div class="bigcode" id="bigCode"></div>
+        <div class="row">
+          <button class="btn" id="copyCode" type="button" data-i18n="copyCode"></button>
+          <button class="btn" id="copyLink" type="button" data-i18n="copyLink"></button>
+        </div>
+      </div>
+      <div class="sheetfoot"><button class="btn primary" id="doneClose" type="button" data-i18n="done"></button></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Viewer -->
+<dialog id="viewer" class="sheet viewer" aria-label="Post">
+  <div class="sheetin">
+    <div class="sheethead">
+      <div class="vmeta" id="vMeta"></div>
+      <button class="x" id="viewerClose" type="button" data-i18n-aria="close">×</button>
+    </div>
+    <div class="vcap" id="vCaption"></div>
+    <div class="vbody" id="vBody"></div>
+  </div>
 </dialog>
 
 <div id="toasts" role="status"></div>
@@ -189,322 +367,567 @@ footer{margin-top:56px; color:var(--muted); font-size:.85rem}
 (function(){
   "use strict";
 
-  /* ============ CONFIG: paste your Supabase values here ============ */
+  /* ============ CONFIG: Supabase project ============ */
   var SUPABASE_URL = "https://khpehfpphajkzwrgderu.supabase.co";
   var SUPABASE_KEY = "sb_publishable_EEKws8PmmIikLgEhCx9u2w_FS_zaa_k";
-  /* ================================================================== */
+  /* ================================================== */
 
   var BUCKET = "images";
-  var MAX_IMAGE = 5 * 1024 * 1024, MAX_MEDIA = 25 * 1024 * 1024;
-  var EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp","image/avif":"avif","video/mp4":"mp4","audio/mpeg":"mp3"};
-  var BY_EXT = {png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",avif:"image/avif",mp4:"video/mp4",mp3:"audio/mpeg"};
-  // Some browsers report MP3 as audio/mp3 or leave the type empty: normalise it
-  function typeOf(f){
-    var t = f.type === "audio/mp3" ? "audio/mpeg" : f.type;
-    if(EXT[t]) return t;
-    var m = /\.([a-z0-9]+)$/i.exec(f.name || "");
-    return m ? (BY_EXT[m[1].toLowerCase()] || "") : "";
+  var MAX_IMAGE = 5 * 1048576, MAX_MEDIA = 25 * 1048576, MAX_FILES = 10;
+  var EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/webp":"webp","image/avif":"avif","video/mp4":"mp4","audio/mpeg":"mp3","application/pdf":"pdf"};
+  var BY_EXT = {png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",avif:"image/avif",mp4:"video/mp4",mp3:"audio/mpeg",pdf:"application/pdf"};
+  var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // no 0/O/1/I to avoid mix-ups
+
+  /* ---------- Translations ---------- */
+  var I18N = {
+    en:{
+      langAria:"Cambiar a español", eyebrow:"Public gallery",
+      subtitle:"Share files with everyone, or keep them private and share them with a link or a short code.",
+      publish:"Publish", findLabel:"Find a private post by code", findPh:"Have a code? Enter it here", find:"Find",
+      galleryTitle:"Latest posts", refresh:"Refresh", loading:"Loading posts…",
+      emptyTitle:"Nothing here yet", emptyText:"Be the first to publish something.",
+      footer:"Public posts are visible to everyone. Private posts are hidden from the gallery, but anyone with the link or the code can open them. Do not upload anything sensitive.",
+      composerTitle:"New post", close:"Close", descLabel:"Description (optional)", descPh:"Write something about what you are sharing…",
+      filesLabel:"Files", dropTitle:"Drop files here or click to browse", dropSub:"Several at once: images, GIF, MP4, MP3 and PDF",
+      limits:"Images up to 5 MB. MP3, MP4 and PDF up to 25 MB. Up to 10 files per post.",
+      linkLabel:"Or add a link to an image or GIF", addLink:"Add link",
+      linkHint:"Direct links ending in .gif, .png, .jpg, .webp, .mp4 or .mp3. Discord GIF links (.mp4) work too.",
+      visLabel:"Who can see it?", visPublic:"Public", visPublicDesc:"Everyone sees it in the gallery.",
+      visPrivate:"Private", visPrivateDesc:"Not shown in the gallery. Share it with a link or a 5-character code.",
+      cancel:"Cancel", uploadingN:"Uploading {n} of {total}…", saving:"Publishing…",
+      donePublicTitle:"Published!", donePublicText:"Your post is now visible to everyone in the gallery.",
+      donePrivateTitle:"Private post created", donePrivateText:"Only people with the code or the link can open it. Save this code, it is also shown on your post in the gallery.",
+      codeLabel:"Your code", copyCode:"Copy code", copyLink:"Copy link", done:"Done", copied:"Copied to the clipboard.",
+      view:"Open post", download:"Download", downloadAll:"Download all", del:"Delete", confirmDel:"Click again to confirm",
+      private:"Private", yours:"Yours", openTab:"Open in new tab", pdfLoading:"Loading PDF…", pdfFail:"Couldn't show this PDF here. Use “Open in new tab”.",
+      nothing:"Add a description, a file or a link first.", unsupported:"That file type is not supported. Use images, GIF, MP4, MP3 or PDF.",
+      tooBig:"That file is larger than {mb} MB.", tooMany:"You can add up to {n} files per post.",
+      badLink:"That doesn't look like a valid link.", httpOnly:"Only http and https links are supported.",
+      tenorPage:"That's a Tenor page link. Open it, right-click the GIF and choose “Copy image address”.",
+      dupLink:"That link is already added.", linkAdded:"Link added.",
+      publishFail:"Couldn't publish.", noBackend:"Can't reach the server. Check your connection and the Supabase setup.",
+      loadFail:"Couldn't load posts:", deleted:"Post deleted.", deleteFail:"Couldn't delete that post.",
+      badCode:"Enter a valid 5-character code.", notFound:"No private post found with that code.", findFail:"Couldn't search right now.",
+      downloadFail:"The source doesn't allow direct download, so it was opened in a new tab.", files:"files"
+    },
+    es:{
+      langAria:"Switch to English", eyebrow:"Galería pública",
+      subtitle:"Comparte archivos con todos, o mantenlos privados y compártelos con un enlace o un código corto.",
+      publish:"Publicar", findLabel:"Buscar una publicación privada por código", findPh:"¿Tienes un código? Escríbelo aquí", find:"Buscar",
+      galleryTitle:"Últimas publicaciones", refresh:"Actualizar", loading:"Cargando publicaciones…",
+      emptyTitle:"Todavía no hay nada", emptyText:"Sé el primero en publicar algo.",
+      footer:"Las publicaciones públicas las ve todo el mundo. Las privadas no aparecen en la galería, pero cualquiera con el enlace o el código puede abrirlas. No subas nada sensible.",
+      composerTitle:"Nueva publicación", close:"Cerrar", descLabel:"Descripción (opcional)", descPh:"Escribe algo sobre lo que compartes…",
+      filesLabel:"Archivos", dropTitle:"Suelta archivos aquí o haz clic para elegir", dropSub:"Varios a la vez: imágenes, GIF, MP4, MP3 y PDF",
+      limits:"Imágenes hasta 5 MB. MP3, MP4 y PDF hasta 25 MB. Hasta 10 archivos por publicación.",
+      linkLabel:"O agrega un link a una imagen o GIF", addLink:"Agregar link",
+      linkHint:"Links directos que terminen en .gif, .png, .jpg, .webp, .mp4 o .mp3. Los GIF de Discord (.mp4) también sirven.",
+      visLabel:"¿Quién puede verlo?", visPublic:"Pública", visPublicDesc:"Todos la ven en la galería.",
+      visPrivate:"Privada", visPrivateDesc:"No aparece en la galería. Compártela con un enlace o un código de 5 caracteres.",
+      cancel:"Cancelar", uploadingN:"Subiendo {n} de {total}…", saving:"Publicando…",
+      donePublicTitle:"¡Publicado!", donePublicText:"Tu publicación ya la ve todo el mundo en la galería.",
+      donePrivateTitle:"Publicación privada creada", donePrivateText:"Solo pueden abrirla quienes tengan el código o el enlace. Guarda este código, también aparece en tu publicación de la galería.",
+      codeLabel:"Tu código", copyCode:"Copiar código", copyLink:"Copiar enlace", done:"Listo", copied:"Copiado al portapapeles.",
+      view:"Abrir publicación", download:"Descargar", downloadAll:"Descargar todo", del:"Borrar", confirmDel:"Toca otra vez para confirmar",
+      private:"Privada", yours:"Tuya", openTab:"Abrir en pestaña nueva", pdfLoading:"Cargando PDF…", pdfFail:"No se pudo mostrar este PDF aquí. Usa “Abrir en pestaña nueva”.",
+      nothing:"Agrega primero una descripción, un archivo o un link.", unsupported:"Ese tipo de archivo no está permitido. Usa imágenes, GIF, MP4, MP3 o PDF.",
+      tooBig:"Ese archivo pesa más de {mb} MB.", tooMany:"Puedes agregar hasta {n} archivos por publicación.",
+      badLink:"Eso no parece un link válido.", httpOnly:"Solo se aceptan links http y https.",
+      tenorPage:"Ese es un link de página de Tenor. Ábrelo, haz clic derecho sobre el GIF y elige “Copiar dirección de la imagen”.",
+      dupLink:"Ese link ya está agregado.", linkAdded:"Link agregado.",
+      publishFail:"No se pudo publicar.", noBackend:"No se puede conectar con el servidor. Revisa tu conexión y la configuración de Supabase.",
+      loadFail:"No se pudieron cargar las publicaciones:", deleted:"Publicación borrada.", deleteFail:"No se pudo borrar esa publicación.",
+      badCode:"Escribe un código válido de 5 caracteres.", notFound:"No hay ninguna publicación privada con ese código.", findFail:"No se pudo buscar ahora.",
+      downloadFail:"El origen no permite la descarga directa, así que se abrió en una pestaña nueva.", files:"archivos"
+    }
+  };
+  var lang = "en";
+  function t(k, v){
+    var s = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+    if(v){ for(var p in v){ s = s.replace("{" + p + "}", v[p]); } }
+    return s;
   }
 
-  var $ = function(id){ return document.getElementById(id); };
-  var drop=$("drop"), fileInput=$("file"), grid=$("grid"), empty=$("empty"), loadingEl=$("loading"),
-      countEl=$("count"), viewer=$("viewer"), viewerImg=$("viewerImg"), viewerName=$("viewerName"),
-      linkUrl=$("linkUrl"), linkAdd=$("linkAdd");
+  /* ---------- Icons & flags ---------- */
+  var SV = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  var ICON = {
+    audio: SV + '><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    pdf:   SV + '><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+    lock:  SV + '><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
+  };
+  function usFlag(){
+    var s = '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/>', h = 20 / 13, i, r, c;
+    for(i = 0; i < 13; i += 2){ s += '<rect y="' + (i * h).toFixed(3) + '" width="30" height="' + h.toFixed(3) + '" fill="#b22234"/>'; }
+    s += '<rect width="12.5" height="' + (7 * h).toFixed(3) + '" fill="#3c3b6e"/>';
+    for(r = 0; r < 4; r++){ for(c = 0; c < 5; c++){ s += '<circle cx="' + (1.6 + c * 2.3).toFixed(2) + '" cy="' + (1.5 + r * 2.4).toFixed(2) + '" r=".5" fill="#fff"/>'; } }
+    return s + '</svg>';
+  }
+  var FLAG = {
+    es: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#c60b1e"/><rect y="5" width="30" height="10" fill="#ffc400"/></svg>',
+    us: usFlag()
+  };
 
-  var items = [], client = null, token = "", myHash = "";
+  /* ---------- DOM ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  function el(tag, cls){ var e = document.createElement(tag); if(cls) e.className = cls; return e; }
+  var grid = $("grid"), empty = $("empty"), loadingEl = $("loading"), countEl = $("count"),
+      composer = $("composer"), viewer = $("viewer"), captionEl = $("caption"), capCount = $("capCount"),
+      fileInput = $("file"), drop = $("drop"), pendingEl = $("pending"), linkUrl = $("linkUrl");
+
+  /* ---------- State ---------- */
+  var client = null, myHash = "", items = [], lastSig = "", animateNext = true;
+  var pending = [], busy = false, lastDone = null, viewToken = 0, blobUrls = [];
 
   /* ---------- Helpers ---------- */
   function toast(msg, isError){
-    var t = document.createElement("div");
-    t.className = "toast" + (isError ? " error" : "");
-    t.textContent = msg;
-    $("toasts").appendChild(t);
-    setTimeout(function(){ t.remove(); }, 4000);
+    var d = el("div", "toast" + (isError ? " error" : ""));
+    d.textContent = msg; $("toasts").appendChild(d);
+    setTimeout(function(){ d.remove(); }, 4200);
   }
-  function fmtSize(b){
-    if(b < 1024) return b + " B";
-    if(b < 1048576) return (b/1024).toFixed(1) + " KB";
-    return (b/1048576).toFixed(2) + " MB";
-  }
-  var captionEl = $("caption"), capCount = $("capCount");
-  function getCaption(){ return captionEl.value.trim().slice(0, 500); }
-  function clearCaption(){ captionEl.value = ""; capCount.textContent = "0 / 500"; }
-  captionEl.addEventListener("input", function(){ capCount.textContent = captionEl.value.length + " / 500"; });
-
-  // Download: stored files use Supabase's download header; links are fetched, with a fallback to opening them
-  function downloadUrl(it){ return it.url + "?download=" + encodeURIComponent(it.name); }
-  async function downloadLinkItem(it){
-    try{
-      var r = await fetch(it.url, {referrerPolicy:"no-referrer"});
-      if(!r.ok) throw new Error("bad response");
-      var blob = await r.blob(), a = document.createElement("a");
-      a.href = URL.createObjectURL(blob); a.download = it.name; document.body.appendChild(a); a.click();
-      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    }catch(e){
-      toast("The source doesn't allow direct download, so it was opened in a new tab.", true);
-      window.open(it.url, "_blank", "noopener");
-    }
-  }
-
-  function isAudio(u){
-    try{ return /\.(mp3|m4a|ogg|wav)$/i.test(new URL(u).pathname); }catch(e){ return false; }
-  }
-  function isVideo(u){
-    try{ return /\.(mp4|webm|mov|m4v)$/i.test(new URL(u).pathname); }catch(e){ return false; }
-  }
-  function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return u; } }
-  function nameFromUrl(u){
-    try{ return decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).pop() || "") || hostOf(u); }
-    catch(e){ return u; }
-  }
-  function newToken(){
-    var a = new Uint8Array(16); crypto.getRandomValues(a);
-    return Array.from(a).map(function(x){ return x.toString(16).padStart(2,"0"); }).join("");
-  }
+  function hex(buf){ return Array.from(new Uint8Array(buf)).map(function(x){ return x.toString(16).padStart(2, "0"); }).join(""); }
+  function newToken(){ var a = new Uint8Array(16); crypto.getRandomValues(a); return hex(a); }
   function getToken(){
-    var k = "image-vault-owner", t = null;
-    try{ t = localStorage.getItem(k); if(!t){ t = newToken(); localStorage.setItem(k, t); } }
-    catch(e){ t = t || newToken(); }
-    return t;
+    var k = "image-vault-owner", v = null;
+    try{ v = localStorage.getItem(k); if(!v){ v = newToken(); localStorage.setItem(k, v); } }
+    catch(e){ v = v || newToken(); }
+    return v;
   }
-  async function sha256(s){
-    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-    return Array.from(new Uint8Array(buf)).map(function(x){ return x.toString(16).padStart(2,"0"); }).join("");
+  async function sha256(s){ return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s))); }
+  function genCode(){
+    var a = new Uint8Array(5), s = "", i; crypto.getRandomValues(a);
+    for(i = 0; i < 5; i++){ s += ALPHABET[a[i] & 31]; }
+    return s;
   }
-  // Two-step delete: first click asks to confirm, second click deletes
+  function parseCode(raw){
+    raw = (raw || "").trim();
+    var m = /[?&]code=([A-Za-z0-9]+)/.exec(raw); if(m){ raw = m[1]; }
+    raw = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return raw.length === 5 ? raw : "";
+  }
+  function shareLink(code){ return location.origin + location.pathname + "?code=" + code; }
+  function safeUrl(u){ try{ var p = new URL(u); return (p.protocol === "https:" || p.protocol === "http:") ? p.href : ""; }catch(e){ return ""; } }
+  function hasExt(u, re){ try{ return re.test(new URL(u).pathname); }catch(e){ return false; } }
+  function isVideoUrl(u){ return hasExt(u, /\.(mp4|webm|mov|m4v)$/i); }
+  function isAudioUrl(u){ return hasExt(u, /\.(mp3|m4a|ogg|wav)$/i); }
+  function nameFromUrl(u){
+    try{ return (decodeURIComponent(new URL(u).pathname.split("/").filter(Boolean).pop() || "") || new URL(u).hostname).slice(0, 120); }
+    catch(e){ return "file"; }
+  }
+  function cleanName(n){ return (n || "file").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 120); }
+  function classify(mime){
+    if(mime.indexOf("image/") === 0) return "image";
+    if(mime.indexOf("video/") === 0) return "video";
+    if(mime.indexOf("audio/") === 0) return "audio";
+    return "pdf";
+  }
+  function typeOfFile(f){
+    var tp = f.type === "audio/mp3" ? "audio/mpeg" : f.type;
+    if(EXT[tp]) return tp;
+    var m = /\.([a-z0-9]+)$/i.exec(f.name || "");
+    return m ? (BY_EXT[m[1].toLowerCase()] || "") : "";
+  }
+  function tagOf(mime){ return mime === "image/gif" ? "GIF" : mime.indexOf("image/") === 0 ? "IMG" : mime === "video/mp4" ? "MP4" : mime === "audio/mpeg" ? "MP3" : "PDF"; }
+  function copyText(s){
+    var ok = function(){ toast(t("copied")); };
+    var fb = function(){
+      var ta = el("textarea"); ta.value = s; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); ok(); }catch(e){}
+      ta.remove();
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(s).then(ok, fb); } else { fb(); }
+  }
   function armDelete(btn, action){
-    var timer = null, original = btn.textContent;
+    var timer = null, label = btn.textContent;
     btn.addEventListener("click", function(){
       if(btn.classList.contains("confirm")){ clearTimeout(timer); btn.disabled = true; action(); return; }
-      btn.classList.add("confirm"); btn.textContent = "Click again to confirm";
-      timer = setTimeout(function(){ btn.classList.remove("confirm"); btn.textContent = original; }, 3000);
+      btn.classList.add("confirm"); btn.textContent = t("confirmDel");
+      timer = setTimeout(function(){ btn.classList.remove("confirm"); btn.textContent = label; }, 3000);
     });
+  }
+
+  /* ---------- Downloads ---------- */
+  function startDownload(href, name){
+    var a = el("a"); a.href = href; a.download = name || "file"; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); }, 1500);
+  }
+  async function downloadFile(f){
+    var u = safeUrl(f.url); if(!u) return;
+    if(f.kind === "file"){ startDownload(u + "?download=" + encodeURIComponent(f.name || "file"), f.name); return; }
+    try{
+      var r = await fetch(u, {referrerPolicy:"no-referrer"});
+      if(!r.ok) throw new Error("bad");
+      var b = await r.blob(), href = URL.createObjectURL(b);
+      startDownload(href, f.name); setTimeout(function(){ URL.revokeObjectURL(href); }, 4000);
+    }catch(e){ toast(t("downloadFail"), true); window.open(u, "_blank", "noopener"); }
+  }
+  async function downloadAll(files){
+    for(var i = 0; i < files.length; i++){ await downloadFile(files[i]); await new Promise(function(r){ setTimeout(r, 600); }); }
+  }
+
+  /* ---------- Language ---------- */
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function(n){ n.textContent = t(n.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function(n){ n.placeholder = t(n.getAttribute("data-i18n-ph")); });
+    document.querySelectorAll("[data-i18n-aria]").forEach(function(n){ n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
+    var lb = $("lang");
+    lb.innerHTML = lang === "en" ? FLAG.es : FLAG.us;      // shows the language you will switch TO
+    lb.setAttribute("aria-label", t("langAria")); lb.title = t("langAria");
+    render();
+    if(lastDone && !$("stepDone").hidden){ showDone(lastDone); }
+  }
+  function toggleLang(){
+    lang = lang === "en" ? "es" : "en";
+    try{ localStorage.setItem("image-vault-lang", lang); }catch(e){}
+    applyLang();
   }
 
   /* ---------- Data ---------- */
   async function load(silent){
-    var res = await client.from("images").select("*").order("created_at", {ascending:false}).limit(200);
+    if(!client){ loadingEl.hidden = true; empty.hidden = false; return; }
+    var res = await client.from("posts").select("*").order("created_at", {ascending:false}).limit(200);
     loadingEl.hidden = true;
     if(res.error){
       console.error("Supabase error:", res.error);
-      if(!silent) toast("Couldn't load uploads: " + (res.error.message || "unknown error"), true);
+      if(!silent){ toast(t("loadFail") + " " + (res.error.message || ""), true); }
       return;
     }
-    items = res.data || [];
-    render();
+    var data = res.data || [];
+    var sig = data.map(function(p){ return p.id + "|" + p.visibility + "|" + (p.caption || ""); }).join(",");
+    if(silent && sig === lastSig){ return; }
+    lastSig = sig; items = data; render();
   }
 
-  async function uploadFiles(fileList){
-    var files = Array.prototype.slice.call(fileList || []);
-    if(!files.length) return;
-    var ok = 0, cap = getCaption();
-    for(var i = 0; i < files.length; i++){
-      var f = files[i];
-      var type = typeOf(f);
-      if(!type){ toast("“" + f.name + "” is not supported. Use PNG, JPG, GIF, WebP, AVIF, MP3 or MP4.", true); continue; }
-      var isImg = type.indexOf("image/") === 0, limit = isImg ? MAX_IMAGE : MAX_MEDIA;
-      if(f.size > limit){ toast("“" + f.name + "” is larger than " + (limit / 1048576) + " MB.", true); continue; }
-      var path = myHash + "/" + newToken() + "." + EXT[type];
-      var up = await client.storage.from(BUCKET).upload(path, f, {contentType:type, cacheControl:"31536000"});
-      if(up.error){ toast("Could not upload “" + f.name + "”.", true); continue; }
-      var url = client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-      var ins = await client.from("images").insert({name:f.name.slice(0,200), size:f.size, kind:"file", url:url, path:path, caption:cap || null, owner_hash:myHash});
-      if(ins.error){ await client.storage.from(BUCKET).remove([path]); toast("Could not save “" + f.name + "”.", true); continue; }
-      ok++;
-    }
-    if(ok){ clearCaption(); toast(ok === 1 ? "1 file uploaded." : ok + " files uploaded."); await load(true); }
+  async function removePost(p){
+    var paths = (p.files || []).filter(function(f){ return f.path; }).map(function(f){ return f.path; });
+    if(paths.length){ await client.storage.from(BUCKET).remove(paths); }
+    var del = await client.from("posts").delete().eq("id", p.id);
+    if(del.error){ toast(t("deleteFail"), true); render(); return; }
+    toast(t("deleted")); lastSig = ""; await load(true);
   }
 
-  var forceUrl = "";
-  function addLink(){
-    var raw = linkUrl.value.trim();
-    if(!raw){ toast("Paste an image or GIF link first.", true); return; }
-    var parsed;
-    try{ parsed = new URL(raw); }catch(e){ toast("That doesn't look like a valid link.", true); return; }
-    if(parsed.protocol !== "https:" && parsed.protocol !== "http:"){ toast("Only http and https links are supported.", true); return; }
-
-    // Discord proxy links (…discordapp.net/external/<code>/https/<original>) hide the real source: use it directly
-    var px = /discordapp\.(net|com)$/.test(parsed.hostname) && parsed.pathname.match(/^\/external\/[^/]+\/(https?)\/(.+)$/);
-    if(px){
-      try{ parsed = new URL(px[1] + "://" + px[2]); }catch(e){}
-    }
-
-    var host = parsed.hostname.replace(/^www\./,"");
-    var g = (host === "giphy.com") && parsed.pathname.match(/^\/(?:gifs|stickers)\/(?:.*-)?([A-Za-z0-9]+)\/?$/);
-    if(g){ parsed = new URL("https://media.giphy.com/media/" + g[1] + "/giphy.gif"); }
-    if(host === "tenor.com" && /^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?view\//.test(parsed.pathname)){
-      toast("That's a Tenor page link. Open it, right-click the GIF and choose “Copy image address”.", true); return;
-    }
-    if(items.some(function(i){ return i.url === parsed.href; })){ toast("That link is already in the gallery.", true); return; }
-
-    var force = (forceUrl === parsed.href);
-    linkAdd.disabled = true; linkAdd.textContent = force ? "Adding…" : "Checking…";
-    var done = function(){ linkAdd.disabled = false; linkAdd.textContent = "Add link"; };
-    var saveLink = async function(){
-      var ins = await client.from("images").insert({name:nameFromUrl(parsed.href).slice(0,200), size:0, kind:"link", url:parsed.href, path:null, caption:getCaption() || null, owner_hash:myHash});
-      if(ins.error){ console.error(ins.error); toast("Could not save the link: " + (ins.error.message || "unknown error"), true); }
-      else { linkUrl.value = ""; clearCaption(); forceUrl = ""; toast("Link added."); await load(true); }
-      done();
-    };
-    if(force){ saveLink(); return; }
-
-    var audioLink = isAudio(parsed.href), video = isVideo(parsed.href) || audioLink;
-    var probe = video ? document.createElement(audioLink ? "audio" : "video") : new Image();
-    var finished = false, timer = null;
-    var cleanup = function(){
-      clearTimeout(timer);
-      probe.onerror = null;
-      if(video){ probe.pause(); probe.removeAttribute("src"); probe.load(); probe.remove(); }
-    };
-    var ok = function(){ if(finished) return; finished = true; cleanup(); saveLink(); };
-    var fail = function(){
-      if(finished) return; finished = true; cleanup();
-      if(video){
-        // The check can fail even when the file plays fine (power-saving modes, some servers): let the person add it anyway
-        forceUrl = parsed.href;
-        toast("Couldn't verify that link. If it plays in a new tab, click “Add link” again to add it anyway.", true);
-      }else if(/discord(app)?\.(com|net)$/.test(parsed.hostname)){
-        toast("Discord couldn't load that link. Discord links expire: copy a fresh one, including everything after the “?”.", true);
-      }else{
-        toast("Couldn't load an image from that link. Use a direct image or GIF address.", true);
-      }
-      done();
-    };
-    probe.onerror = fail;
-    if(video){
-      probe.muted = true; probe.preload = "auto"; probe.style.display = "none";
-      ["loadedmetadata","loadeddata","canplay"].forEach(function(ev){ probe.addEventListener(ev, ok); });
-      document.body.appendChild(probe);          // attached players load more reliably than detached ones
-      timer = setTimeout(fail, 10000);
-    }else{
-      probe.referrerPolicy = "no-referrer";
-      probe.onload = ok;
-    }
-    probe.src = parsed.href;
-    if(video){ var pp = probe.play(); if(pp && pp.catch){ pp.catch(function(){}); } }
+  async function findByCode(raw){
+    var code = parseCode(raw);
+    if(!code){ toast(t("badCode"), true); return; }
+    if(!client){ toast(t("noBackend"), true); return; }
+    var r = await client.rpc("get_private_post", {p_code: code});
+    if(r.error){ console.error(r.error); toast(t("findFail"), true); return; }
+    var rows = r.data || [];
+    if(!rows.length){ toast(t("notFound"), true); return; }
+    $("findInput").value = ""; openViewer(rows[0]);
   }
 
-  async function removeItem(it){
-    if(it.path){ await client.storage.from(BUCKET).remove([it.path]); }
-    var del = await client.from("images").delete().eq("id", it.id);
-    if(del.error){ toast("Could not delete that image.", true); render(); return; }
-    toast("Image deleted.");
-    await load(true);
+  /* ---------- Gallery ---------- */
+  function buildCover(files){
+    if(!files.length) return null;
+    var f = files.find(function(x){ return x.type === "image" || x.type === "video"; }) || files[0];
+    var u = safeUrl(f.url), box;
+    if(f.type === "image" && u){
+      box = el("img"); box.referrerPolicy = "no-referrer"; box.src = u; box.alt = ""; box.loading = "lazy"; return box;
+    }
+    if(f.type === "video" && u){
+      box = el("video"); box.playsInline = true; box.muted = true; box.setAttribute("muted", ""); box.preload = "metadata";
+      if(f.kind === "link"){ box.loop = true; box.autoplay = true; box.src = u; box.play().catch(function(){}); }
+      else { box.src = u + "#t=0.1"; }
+      return box;
+    }
+    box = el("div", "iconcover");
+    box.innerHTML = (f.type === "audio" ? ICON.audio : ICON.pdf) + "<span>" + (f.type === "audio" ? "MP3" : "PDF") + "</span>";
+    return box;
   }
 
-  /* ---------- Rendering ---------- */
   function render(){
     grid.textContent = "";
-    items.forEach(function(it){
-      var card = document.createElement("article"); card.className = "card";
+    items.forEach(function(p, idx){
+      var files = p.files || [], mine = p.owner_hash === myHash, priv = p.visibility === "private";
+      var card = el("article", "card" + (files.length ? "" : " textonly"));
+      if(animateNext){ card.classList.add("enter"); card.style.setProperty("--i", Math.min(idx, 10)); }
 
-      var thumb;
-      if(isAudio(it.url)){
-        thumb = document.createElement("div"); thumb.className = "audiobox";
-        thumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-        var aud = document.createElement("audio");
-        aud.controls = true; aud.preload = "none"; aud.src = it.url;
-        aud.setAttribute("aria-label", it.name);
-        thumb.appendChild(aud);
-      }else{
-        thumb = document.createElement("button");
-        thumb.className = "thumb"; thumb.type = "button";
-        thumb.setAttribute("aria-label", "View " + it.name);
-        if(isVideo(it.url)){
-          var vid = document.createElement("video");
-          vid.playsInline = true; vid.preload = "metadata";
-          if(it.kind === "link"){
-            // Links behave like GIFs: silent, looping, autoplay
-            vid.muted = true; vid.loop = true; vid.autoplay = true; vid.setAttribute("muted", "");
-            vid.src = it.url; thumb.appendChild(vid); vid.play().catch(function(){});
-          }else{
-            // Uploaded videos show their first frame until opened
-            vid.muted = true; vid.src = it.url + "#t=0.1"; thumb.appendChild(vid);
-          }
-        }else{
-          var img = document.createElement("img");
-          img.referrerPolicy = "no-referrer"; img.src = it.url; img.alt = it.name; img.loading = "lazy";
-          thumb.appendChild(img);
-        }
-        thumb.addEventListener("click", function(){ openViewer(it); });
+      var cover = buildCover(files);
+      if(cover){
+        var tb = el("button", "thumb"); tb.type = "button"; tb.setAttribute("aria-label", t("view"));
+        tb.appendChild(cover);
+        if(files.length > 1){ var more = el("span", "more"); more.textContent = "+" + (files.length - 1); tb.appendChild(more); }
+        tb.addEventListener("click", function(){ openViewer(p); });
+        card.appendChild(tb);
       }
 
-      var meta = document.createElement("div"); meta.className = "meta";
-      var name = document.createElement("div"); name.className = "name"; name.textContent = it.name; name.title = it.name;
-      var sub = document.createElement("div"); sub.className = "sub";
-      var mine = it.owner_hash === myHash;
-      sub.textContent = (it.kind === "link" ? "Link · " + hostOf(it.url) : fmtSize(it.size)) + (mine ? " · " : "");
-      if(mine){ var tag = document.createElement("span"); tag.className = "mine"; tag.textContent = "Yours"; sub.appendChild(tag); }
-      meta.append(name, sub);
+      var meta = el("div", "meta"), sub = el("div", "subrow");
+      if(priv){
+        var b = el("span", "badge private"); b.innerHTML = ICON.lock; var bt = el("span"); bt.textContent = t("private"); b.appendChild(bt); sub.appendChild(b);
+        if(mine && p.code){ var cc = el("span", "codechip"); cc.textContent = p.code; sub.appendChild(cc); }
+      }
+      if(mine){ var m = el("span", "badge mine"); m.textContent = t("yours"); sub.appendChild(m); }
+      if(sub.childNodes.length){ meta.appendChild(sub); }
 
-      if(it.caption){
-        var cap = document.createElement("div"); cap.className = "caption"; cap.textContent = it.caption;
-        cap.title = "Click to expand";
+      if(p.caption){
+        var cap = el("div", "caption"); cap.textContent = p.caption;
         cap.addEventListener("click", function(){ cap.classList.toggle("expanded"); });
         meta.appendChild(cap);
       }
 
-      var actions = document.createElement("div"); actions.className = "actions";
-      if(it.kind === "link"){
-        var dl = document.createElement("button"); dl.type = "button"; dl.className = "btn"; dl.textContent = "Download";
-        dl.addEventListener("click", function(){ downloadLinkItem(it); });
-      }else{
-        var dl = document.createElement("a"); dl.className = "btn"; dl.textContent = "Download";
-        dl.href = downloadUrl(it); dl.setAttribute("download", it.name); dl.rel = "noopener";
+      var actions = el("div", "actions");
+      if(files.length){
+        var dl = el("button", "btn"); dl.type = "button"; dl.textContent = t("download");
+        dl.addEventListener("click", function(){ downloadAll(files); });
+        actions.appendChild(dl);
       }
-      actions.appendChild(dl);
+      if(priv && mine && p.code){
+        var cl = el("button", "btn"); cl.type = "button"; cl.textContent = t("copyLink");
+        cl.addEventListener("click", function(){ copyText(shareLink(p.code)); });
+        actions.appendChild(cl);
+      }
       if(mine){
-        var del = document.createElement("button"); del.className = "btn danger"; del.type = "button"; del.textContent = "Delete";
-        armDelete(del, function(){ removeItem(it); });
+        var del = el("button", "btn danger"); del.type = "button"; del.textContent = t("del");
+        armDelete(del, function(){ removePost(p); });
         actions.appendChild(del);
       }
-      meta.appendChild(actions);
-      card.append(thumb, meta);
+      if(actions.childNodes.length){ meta.appendChild(actions); }
+      card.appendChild(meta);
       grid.appendChild(card);
     });
-    countEl.textContent = items.length ? "(" + items.length + ")" : "";
-    empty.hidden = items.length > 0;
+    animateNext = false;
+    countEl.textContent = items.length ? items.length : "";
+    empty.hidden = items.length > 0 || !loadingEl.hidden;
   }
 
-  function openViewer(it){
-    var vv = $("viewerVid"), asVideo = isVideo(it.url);
-    viewerImg.hidden = asVideo; vv.hidden = !asVideo;
-    if(asVideo){ vv.muted = it.kind === "link"; vv.src = it.url; vv.play().catch(function(){}); viewerImg.removeAttribute("src"); }
-    else{ vv.pause(); vv.removeAttribute("src"); viewerImg.referrerPolicy = "no-referrer"; viewerImg.src = it.url; }
-    viewerImg.alt = it.name; viewerName.textContent = it.name; $("viewerCap").textContent = it.caption || "";
-    if(typeof viewer.showModal === "function") viewer.showModal(); else viewer.setAttribute("open","");
+  /* ---------- Viewer ---------- */
+  function cleanupViewer(){
+    viewToken++;
+    blobUrls.forEach(function(u){ URL.revokeObjectURL(u); }); blobUrls = [];
+    $("vBody").querySelectorAll("video,audio").forEach(function(m){ try{ m.pause(); }catch(e){} });
+    $("vBody").textContent = "";
+  }
+  function fileBlock(f, token){
+    var wrap = el("div", "fblock"), u = safeUrl(f.url), media;
+    if(!u){ return wrap; }
+    if(f.type === "image"){
+      media = el("img"); media.referrerPolicy = "no-referrer"; media.src = u; media.alt = ""; wrap.appendChild(media);
+    }else if(f.type === "video"){
+      media = el("video"); media.controls = true; media.playsInline = true; media.preload = "metadata";
+      if(f.kind === "link"){ media.muted = true; media.loop = true; media.autoplay = true; }
+      media.src = u; wrap.appendChild(media);
+    }else if(f.type === "audio"){
+      var af = el("div", "audiofr"); af.innerHTML = ICON.audio;
+      media = el("audio"); media.controls = true; media.preload = "none"; media.src = u; af.appendChild(media); wrap.appendChild(af);
+    }else{
+      var box = el("div", "pdfbox"); box.textContent = t("pdfLoading"); wrap.appendChild(box);
+      var tab = el("a", "btn"); tab.target = "_blank"; tab.rel = "noopener"; tab.href = u; tab.textContent = t("openTab");
+      // Load through a blob so the browser's PDF viewer works inside the page
+      fetch(u, {referrerPolicy:"no-referrer"}).then(function(r){ if(!r.ok) throw new Error("bad"); return r.blob(); }).then(function(b){
+        if(token !== viewToken) return;
+        var url = URL.createObjectURL(new Blob([b], {type:"application/pdf"})); blobUrls.push(url);
+        var ifr = el("iframe"); ifr.src = url; ifr.title = "PDF";
+        box.textContent = ""; box.style.display = "block"; box.style.padding = "0"; box.appendChild(ifr); tab.href = url;
+      }).catch(function(){ if(token === viewToken){ box.textContent = t("pdfFail"); } });
+      var prow = el("div", "frow"); prow.appendChild(tab);
+      var pdl = el("button", "btn"); pdl.type = "button"; pdl.textContent = t("download"); pdl.addEventListener("click", function(){ downloadFile(f); });
+      prow.appendChild(pdl); wrap.appendChild(prow); return wrap;
+    }
+    var row = el("div", "frow"), dl = el("button", "btn"); dl.type = "button"; dl.textContent = t("download");
+    dl.addEventListener("click", function(){ downloadFile(f); });
+    row.appendChild(dl); wrap.appendChild(row);
+    return wrap;
+  }
+  function openViewer(p){
+    cleanupViewer();
+    var token = viewToken, meta = $("vMeta"); meta.textContent = "";
+    if(p.visibility === "private"){
+      var b = el("span", "badge private"); b.innerHTML = ICON.lock; var bt = el("span"); bt.textContent = t("private"); b.appendChild(bt); meta.appendChild(b);
+      if(p.code){
+        var cc = el("span", "codechip"); cc.textContent = p.code; meta.appendChild(cc);
+        var cl = el("button", "btn"); cl.type = "button"; cl.style.padding = "7px 14px"; cl.textContent = t("copyLink");
+        cl.addEventListener("click", function(){ copyText(shareLink(p.code)); }); meta.appendChild(cl);
+      }
+    }
+    $("vCaption").textContent = p.caption || "";
+    var files = p.files || [], body = $("vBody");
+    files.forEach(function(f){ body.appendChild(fileBlock(f, token)); });
+    if(files.length > 1){
+      var all = el("button", "btn"); all.type = "button"; all.textContent = t("downloadAll"); all.style.alignSelf = "flex-start";
+      all.addEventListener("click", function(){ downloadAll(files); }); body.appendChild(all);
+    }
+    if(typeof viewer.showModal === "function"){ if(!viewer.open) viewer.showModal(); } else { viewer.setAttribute("open", ""); }
+    viewer.scrollTop = 0;
+  }
+
+  /* ---------- Composer ---------- */
+  function resetComposer(){
+    pending.forEach(function(p){ if(p.preview && p.kind === "file"){ URL.revokeObjectURL(p.preview); } });
+    pending = []; renderPending();
+    captionEl.value = ""; capCount.textContent = "0 / 500"; linkUrl.value = "";
+    document.querySelector('input[name="vis"][value="public"]').checked = true;
+    $("progress").hidden = true; $("pfill").style.width = "0";
+    $("stepForm").hidden = false; $("stepDone").hidden = true; lastDone = null;
+    setBusy(false);
+  }
+  function openComposer(){
+    if(!composer.open){ resetComposer(); composer.showModal(); }
+  }
+  function setBusy(v){
+    busy = v;
+    ["publishNow", "cancel", "linkAdd", "composerX"].forEach(function(id){ $(id).disabled = v; });
+    $("publishNow").textContent = v ? "…" : t("publish");
+    drop.style.pointerEvents = v ? "none" : ""; drop.style.opacity = v ? ".6" : "";
+  }
+  function renderPending(){
+    pendingEl.textContent = "";
+    pending.forEach(function(p, i){
+      var tile = el("div", "ptile"), inner;
+      if(p.type === "image" && p.preview){ inner = el("img"); inner.src = p.preview; inner.alt = ""; if(p.kind === "link"){ inner.referrerPolicy = "no-referrer"; } tile.appendChild(inner); }
+      else if(p.type === "video" && p.preview){ inner = el("video"); inner.muted = true; inner.preload = "metadata"; inner.src = p.preview + (p.kind === "file" ? "#t=0.1" : ""); tile.appendChild(inner); }
+      else { var ic = el("span"); ic.innerHTML = p.type === "audio" ? ICON.audio : ICON.pdf; ic.firstChild.setAttribute("class", "ic"); tile.appendChild(ic.firstChild); }
+      var tag = el("span", "tag"); tag.textContent = p.tag; tile.appendChild(tag);
+      var rm = el("button", "rm"); rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", t("del"));
+      rm.addEventListener("click", function(){
+        if(busy) return;
+        if(p.preview && p.kind === "file"){ URL.revokeObjectURL(p.preview); }
+        pending.splice(i, 1); renderPending();
+      });
+      tile.appendChild(rm); pendingEl.appendChild(tile);
+    });
+  }
+  function addFiles(list){
+    var files = Array.prototype.slice.call(list || []);
+    for(var i = 0; i < files.length; i++){
+      var f = files[i];
+      if(pending.length >= MAX_FILES){ toast(t("tooMany", {n: MAX_FILES}), true); break; }
+      var mime = typeOfFile(f);
+      if(!mime){ toast(t("unsupported"), true); continue; }
+      var limit = mime.indexOf("image/") === 0 ? MAX_IMAGE : MAX_MEDIA;
+      if(f.size > limit){ toast(t("tooBig", {mb: limit / 1048576}), true); continue; }
+      var type = classify(mime);
+      pending.push({kind:"file", file:f, mime:mime, type:type, tag:tagOf(mime), preview:(type === "image" || type === "video") ? URL.createObjectURL(f) : null});
+    }
+    renderPending();
+  }
+  function addLink(){
+    var raw = linkUrl.value.trim();
+    if(!raw){ return; }
+    var parsed;
+    try{ parsed = new URL(raw); }catch(e){ toast(t("badLink"), true); return; }
+    if(parsed.protocol !== "https:" && parsed.protocol !== "http:"){ toast(t("httpOnly"), true); return; }
+    // Discord proxy links hide the original source: use it directly
+    var px = /discordapp\.(net|com)$/.test(parsed.hostname) && parsed.pathname.match(/^\/external\/[^/]+\/(https?)\/(.+)$/);
+    if(px){ try{ parsed = new URL(px[1] + "://" + px[2]); }catch(e){} }
+    var host = parsed.hostname.replace(/^www\./, "");
+    var g = host === "giphy.com" && parsed.pathname.match(/^\/(?:gifs|stickers)\/(?:.*-)?([A-Za-z0-9]+)\/?$/);
+    if(g){ parsed = new URL("https://media.giphy.com/media/" + g[1] + "/giphy.gif"); }
+    if(host === "tenor.com" && /^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?view\//.test(parsed.pathname)){ toast(t("tenorPage"), true); return; }
+    if(pending.length >= MAX_FILES){ toast(t("tooMany", {n: MAX_FILES}), true); return; }
+    if(pending.some(function(p){ return p.url === parsed.href; })){ toast(t("dupLink"), true); return; }
+    var type = isAudioUrl(parsed.href) ? "audio" : isVideoUrl(parsed.href) ? "video" : "image";
+    pending.push({kind:"link", url:parsed.href, type:type, tag:"LINK", preview:(type === "audio" ? null : parsed.href)});
+    linkUrl.value = ""; renderPending(); toast(t("linkAdded"));
+  }
+  function progress(text, pct){ $("progress").hidden = false; $("ptext").textContent = text; $("pfill").style.width = pct + "%"; }
+
+  async function publish(){
+    if(busy) return;
+    var cap = captionEl.value.trim().slice(0, 500);
+    if(!cap && !pending.length){ toast(t("nothing"), true); return; }
+    if(!client){ toast(t("noBackend"), true); return; }
+    var vis = document.querySelector('input[name="vis"]:checked').value;
+    setBusy(true);
+    var uploaded = [], meta = [];
+    try{
+      var total = pending.filter(function(p){ return p.kind === "file"; }).length, n = 0;
+      for(var i = 0; i < pending.length; i++){
+        var p = pending[i];
+        if(p.kind === "link"){ meta.push({kind:"link", type:p.type, url:p.url, name:nameFromUrl(p.url)}); continue; }
+        n++; progress(t("uploadingN", {n: n, total: total}), Math.round(((n - 1) / total) * 100));
+        var path = myHash + "/" + newToken() + "." + EXT[p.mime];
+        var up = await client.storage.from(BUCKET).upload(path, p.file, {contentType:p.mime, cacheControl:"31536000"});
+        if(up.error){ throw up.error; }
+        uploaded.push(path);
+        meta.push({kind:"file", type:p.type, url:client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl, path:path, name:cleanName(p.file.name), size:p.file.size});
+      }
+      progress(t("saving"), 100);
+      var post = null;
+      for(var tries = 0; tries < 5 && !post; tries++){
+        var row = {visibility:vis, code:(vis === "private" ? genCode() : null), caption:cap || null, files:meta, owner_hash:myHash};
+        var ins = await client.from("posts").insert(row);
+        if(!ins.error){ post = row; break; }
+        if(!(ins.error.code === "23505" && vis === "private")){ throw ins.error; }   // code already used: try another
+      }
+      if(!post){ throw new Error("Could not create a unique code"); }
+      showDone(post);
+      lastSig = ""; animateNext = true; load(true);
+    }catch(e){
+      console.error(e);
+      if(uploaded.length){ try{ await client.storage.from(BUCKET).remove(uploaded); }catch(x){} }
+      toast(t("publishFail") + " " + (e && e.message ? e.message : ""), true);
+      $("progress").hidden = true;
+    }finally{
+      setBusy(false);
+    }
+  }
+  function showDone(post){
+    lastDone = post;
+    $("stepForm").hidden = true; $("stepDone").hidden = false;
+    var priv = post.visibility === "private";
+    $("doneTitle").textContent = t(priv ? "donePrivateTitle" : "donePublicTitle");
+    $("doneText").textContent = t(priv ? "donePrivateText" : "donePublicText");
+    $("codeBox").hidden = !priv;
+    if(priv){ $("bigCode").textContent = post.code; }
+    composer.scrollTop = 0;
   }
 
   /* ---------- Events ---------- */
   function bind(){
-    fileInput.addEventListener("change", function(){ uploadFiles(fileInput.files); fileInput.value = ""; });
-    drop.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
-    ["dragenter","dragover"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("over"); }); });
-    ["dragleave","drop"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("over"); }); });
-    drop.addEventListener("drop", function(e){ uploadFiles(e.dataTransfer.files); });
-    document.addEventListener("paste", function(e){ var f = e.clipboardData ? e.clipboardData.files : null; if(f && f.length) uploadFiles(f); });
-    window.addEventListener("dragover", function(e){ e.preventDefault(); });
-    window.addEventListener("drop", function(e){ e.preventDefault(); });
-    linkAdd.addEventListener("click", addLink);
-    linkUrl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addLink(); } });
+    $("lang").addEventListener("click", toggleLang);
+    $("openComposer").addEventListener("click", openComposer);
     $("refresh").addEventListener("click", function(){ load(false); });
+    $("findForm").addEventListener("submit", function(e){ e.preventDefault(); findByCode($("findInput").value); });
+
+    $("publishNow").addEventListener("click", publish);
+    $("cancel").addEventListener("click", function(){ composer.close(); });
+    $("composerX").addEventListener("click", function(){ composer.close(); });
+    $("doneClose").addEventListener("click", function(){ composer.close(); });
+    composer.addEventListener("cancel", function(e){ if(busy){ e.preventDefault(); } });
+    composer.addEventListener("close", function(){ resetComposer(); });
+    captionEl.addEventListener("input", function(){ capCount.textContent = captionEl.value.length + " / 500"; });
+
+    fileInput.addEventListener("change", function(){ addFiles(fileInput.files); fileInput.value = ""; });
+    drop.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
+    ["dragenter", "dragover"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("over"); }); });
+    ["dragleave", "drop"].forEach(function(ev){ drop.addEventListener(ev, function(){ drop.classList.remove("over"); }); });
+    $("linkAdd").addEventListener("click", addLink);
+    linkUrl.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addLink(); } });
+    $("copyCode").addEventListener("click", function(){ if(lastDone){ copyText(lastDone.code); } });
+    $("copyLink").addEventListener("click", function(){ if(lastDone){ copyText(shareLink(lastDone.code)); } });
+
+    // Files dropped or pasted anywhere open the publish window
+    window.addEventListener("dragover", function(e){ e.preventDefault(); });
+    window.addEventListener("drop", function(e){
+      e.preventDefault();
+      var fl = e.dataTransfer && e.dataTransfer.files;
+      if(fl && fl.length && !viewer.open && !busy){ if(!composer.open){ openComposer(); } if(!$("stepForm").hidden){ addFiles(fl); } }
+    });
+    document.addEventListener("paste", function(e){
+      var fl = e.clipboardData && e.clipboardData.files;
+      if(fl && fl.length && composer.open && !$("stepForm").hidden && !busy){ addFiles(fl); }
+    });
+
     $("viewerClose").addEventListener("click", function(){ viewer.close(); });
-    viewer.addEventListener("click", function(e){ if(e.target === viewer) viewer.close(); });
-    viewer.addEventListener("close", function(){ var v = $("viewerVid"); v.pause(); v.removeAttribute("src"); });
-    // Pick up other people's uploads without a manual refresh
-    setInterval(function(){ if(!document.hidden) load(true); }, 20000);
+    viewer.addEventListener("click", function(e){ if(e.target === viewer){ viewer.close(); } });
+    viewer.addEventListener("close", cleanupViewer);
+    setInterval(function(){ if(!document.hidden && !busy){ load(true); } }, 20000);
   }
 
   /* ---------- Init ---------- */
   (async function init(){
-    bind();
-    var configured = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_KEY.length > 20 && window.supabase;
-    if(!configured){ $("setup").hidden = false; loadingEl.hidden = true; empty.hidden = false; return; }
-    token = getToken();
-    myHash = await sha256(token);
-    // The secret token is sent as a header; the database only ever stores its hash
+    try{ var saved = localStorage.getItem("image-vault-lang"); if(saved === "es" || saved === "en"){ lang = saved; } }catch(e){}
+    bind(); applyLang();
+    var ok = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_KEY.length > 20 && window.supabase;
+    if(!ok){ loadingEl.hidden = true; render(); toast(t("noBackend"), true); return; }
+    var token = getToken(); myHash = await sha256(token);
+    // The secret token goes in a header; the database only ever sees its hash
     client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {global:{headers:{"x-owner-token":token}}});
-    load(false);
+    await load(false);
+    var q = new URLSearchParams(location.search).get("code");
+    if(q){ findByCode(q); }
   })();
 })();
 </script>
